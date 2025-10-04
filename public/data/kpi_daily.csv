@@ -1,0 +1,4 @@
+date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews,freq
+2025-09-20,meta,1000,12,40,10,500000,300000,0,0,2.5
+2025-09-21,meta,1200,16,44,11,550000,290000,0,0,3.1
+2025-09-22,meta,1100,14,41,9,430000,300000,1,0,3.2

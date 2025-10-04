@@ -1,0 +1,4 @@
+date,order_id,sku,qty,price,discount,source,kind,amount
+2025-09-21,ORD1,S1,1,30000,0,meta,base,30000
+2025-09-21,ORD1,S1,1,10000,0,meta,upsell,10000
+2025-09-21,ORD2,S2,1,40000,0,tiktok,base,40000

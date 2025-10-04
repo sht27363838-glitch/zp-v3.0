@@ -1,0 +1,1 @@
+export default function DQ(){return <div className='card'><b>DQ 결정큐</b></div>}

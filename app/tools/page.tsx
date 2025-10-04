@@ -1,0 +1,1 @@
+export default function Tools(){return <div className='card'><b>도구</b></div>}
