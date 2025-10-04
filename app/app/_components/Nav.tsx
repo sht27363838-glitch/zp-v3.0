@@ -15,13 +15,13 @@ const tabs: Tab[] = [
   { href: '/decisions',  label: '결정큐' },
   { href: '/data',       label: '데이터' },
   { href: '/report',     label: '리포트' },
-  { href: '/tools',      label: '도구' },
+  { href: '/tools',      label: '도구' }
 ]
 
-export default function Nav() {
+export default function Nav(){
   const p = usePathname() || '/'
   return (
-    <div className="nav">
+    <div className='nav'>
       {tabs.map(t => (
         <Link key={t.href} href={t.href} className={'tab ' + (p === t.href ? 'active' : '')}>
           {t.label}
