@@ -1,1 +1,51 @@
-:root{--bg:#0F1216;--panel:#161A1E;--border:#232A31;--txt:#E6EAF0;--muted:#9BA7B4;--accent:#0EA5E9;--success:#22C55E;--warn:#F59E0B;--danger:#EF4444;--info:#8B5CF6;--space-xs:8px;--space-sm:12px;--space-md:16px;--space-lg:20px;--space-xl:24px;--radius-card:14px;--radius-chip:12px;--radius-btn:10px;--shadow-card:0 1px 0 rgba(0,0,0,.2);--shadow-hover:0 4px 14px rgba(0,0,0,.25)}*{box-sizing:border-box}html,body{height:100%}html{background:var(--bg);color:var(--txt);font-family:Inter,Pretendard,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}body{margin:0}.container{max-width:1200px;margin:0 auto;padding:var(--space-lg)}.nav{position:sticky;top:0;z-index:40;display:flex;gap:12px;flex-wrap:wrap;padding:12px var(--space-lg);border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(22,26,30,.92),rgba(22,26,30,.86));backdrop-filter:saturate(120%) blur(6px)}.nav a{padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--muted);border:1px solid transparent}.nav a:hover{color:var(--txt);border-color:var(--border);background:#14181C}.nav a.active{color:#fff;background:#0E2A36;border-color:#123544;box-shadow:0 0 0 1px #123544 inset}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.col-12{grid-column:span 12}.col-6{grid-column:span 6}.col-4{grid-column:span 4}.col-3{grid-column:span 3}@media (max-width:900px){.col-6,.col-4,.col-3{grid-column:span 12}}.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-card);padding:var(--space-lg);box-shadow:var(--shadow-card)}.card:hover{box-shadow:var(--shadow-hover)}.card h3{margin:0 0 8px;font-size:18px}.hint{color:var(--muted);font-size:13px}.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;font-size:13px}.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.kpi{background:#11161B;border:1px solid #1F2630;border-radius:12px;padding:12px}.kpi b{display:block;font-size:13px;color:var(--muted)}.kpi .v{font-size:24px;font-weight:700}.kpi .d{font-size:12px}.up{color:var(--success)}.down{color:var(--danger)}.badges{display:flex;gap:8px;flex-wrap:wrap}.badge{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:6px 10px;font-size:12px;border:1px solid var(--border);background:#12161B}.badge.success{color:#022;background:#0a2f1e;border-color:#0d4028}.badge.warn{color:#221;background:#2f260a;border-color:#40320d}.badge.danger{color:#211;background:#3a1313;border-color:#4f1919}.badge.info{color:#201f25;background:#26203a;border-color:#32264f}.badge.primary{color:#06202b;background:#0E2A36;border-color:#123544}.badge button,.badge a{all:unset;cursor:pointer}.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{border-bottom:1px solid var(--border);padding:10px;text-align:right}.table th:first-child,.table td:first-child{text-align:left}.table tr:hover{background:#12181E}.gauge{height:12px;background:#0c1116;border:1px solid #1b2430;border-radius:999px;overflow:hidden}.gauge .fill{height:100%;background:linear-gradient(90deg,#0EA5E9,#22C55E)}.spark{height:40px;width:100%;border-top:1px dashed #28313a;opacity:.9}.footer-muted{margin-top:12px;color:var(--muted);font-size:12px}@media print{.nav{display:none}.container{max-width:720px}.card{page-break-inside:avoid}@page{size:A4;margin:12mm}}
+/* v3.1-2 — Global Tokens + Buttons/Badges */
+:root{
+  --bg:#0F1216; --panel:#161A1E; --border:#232A31;
+  --txt:#E6EAF0; --muted:#9BA7B4;
+  --accent:#0EA5E9; --success:#22C55E; --warn:#F59E0B;
+  --danger:#EF4444; --info:#8B5CF6;
+  --ring: 0 0 0 2px rgba(14,165,233,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:Inter, Pretendard, system-ui, -apple-system, 'Segoe UI', Roboto}
+.container{max-width:1080px; margin:24px auto; padding:0 16px}
+.card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px}
+.table{width:100%; border-collapse:collapse}
+.table th,.table td{border-top:1px solid var(--border); padding:10px 8px; text-align:left}
+.table th{color:var(--muted); font-weight:600}
+
+/* Buttons (tokenized) */
+.btn{display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:12px; border:1px solid #2f3944;
+  background:#232A31; color:var(--txt); font-weight:700; font-size:12px;
+  transition:transform .08s ease, box-shadow .2s ease, background .2s ease; text-decoration:none;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:focus-visible{outline:none; box-shadow:var(--ring)}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+
+/* Variants */
+.btn.primary{background:var(--accent); color:#0F1216; border-color:#0891B2}
+.btn.success{background:var(--success); color:#0F1216; border-color:#16A34A}
+.btn.warn{background:var(--warn); color:#0F1216; border-color:#D97706}
+.btn.danger{background:var(--danger); color:#0F1216; border-color:#DC2626}
+.btn.info{background:var(--info); color:#0F1216; border-color:#7C3AED}
+.btn.ghost{background:transparent; border-color:var(--border); color:var(--txt)}
+.btn.outline{background:transparent}
+
+/* Sizes */
+.btn.sm{padding:6px 10px; border-radius:10px; font-size:11px}
+.btn.lg{padding:10px 14px; border-radius:14px; font-size:13px}
+
+/* Badges */
+.badge{display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:700; border:1px solid #2f3944; background:#232A31; color:var(--txt)}
+.badge.success{background:rgba(34,197,94,.18); border-color:#14532D; color:#34D399}
+.badge.primary{background:rgba(14,165,233,.18); border-color:#0B7285; color:#38BDF8}
+.badge.warn{background:rgba(245,158,11,.20); border-color:#B45309; color:#FBBF24}
+.badge.danger{background:rgba(239,68,68,.20); border-color:#B91C1C; color:#F87171}
+.badge.info{background:rgba(139,92,246,.20); border-color:#6D28D9; color:#A78BFA}
+
+/* HUD helpers */
+.kpi{cursor:pointer}
+.mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space:pre-wrap}
+.footer-muted{color:var(--muted); font-size:12px}
