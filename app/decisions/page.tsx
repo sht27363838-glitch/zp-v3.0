@@ -17,8 +17,10 @@ export default function Decisions(){
       const list = Object.entries(by).map(([ch,rs])=>{
         const k = computeKpi(rs as any)
         const CPA = k.total.orders? k.total.ad_cost/k.total.orders : 0
-        const act = decisionGate({ROAS:k.ROAS, AOV:k.AOV, CPA, CTR:(k.total.clicks||0)/(k.total.impressions||1)})
-        return {channel:ch, ROAS:k.ROAS, AOV:k.AOV, CPA, CTR:(k.total.clicks||0)/(k.total.visits||1), action:act}
+        // HOTFIX: CTR 은 clicks / visits 로 계산 (impressions 컬럼 의존 제거)
+        const CTR = (k.total.clicks||0) / Math.max(1, (k.total.visits||0))
+        const act = decisionGate({ROAS:k.ROAS, AOV:k.AOV, CPA, CTR})
+        return {channel:ch, ROAS:k.ROAS, AOV:k.AOV, CPA, CTR, action:act}
       }).sort((a,b)=> (b.ROAS||0) - (a.ROAS||0))
       setRows(list)
       const saved = JSON.parse(localStorage.getItem('dq_log')||'[]')
@@ -36,7 +38,7 @@ export default function Decisions(){
     <div className='card'>
       <h3>Decision Queue</h3>
       <table className='table'>
-        <thead><tr><th>채널</th><th>ROAS</th><th>CPA</th><th>AOV</th><th>권고</th><th>조치</th></tr></thead>
+        <thead><tr><th>채널</th><th>ROAS</th><th>CPA</th><th>AOV</th><th>CTR</th><th>권고</th><th>조치</th></tr></thead>
         <tbody>
           {rows.map((r,i)=>(
             <tr key={i}>
@@ -44,6 +46,7 @@ export default function Decisions(){
               <td>{r.ROAS.toFixed(2)}</td>
               <td>{fmt.n(Math.round(r.CPA||0))}</td>
               <td>{fmt.n(Math.round(r.AOV||0))}</td>
+              <td>{(r.CTR*100).toFixed(2)}%</td>
               <td><span className={'badge '+(r.action==='SCALE'?'success':r.action==='KEEP'?'primary':'danger')}>{r.action}</span></td>
               <td>
                 <button className='badge primary' onClick={()=>doAction(r.channel,'예산↑')}>예산↑</button>{' '}
