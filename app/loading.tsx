@@ -1,0 +1,1 @@
+export default function Loading(){ return <div className='card'>불러오는 중…</div> }
