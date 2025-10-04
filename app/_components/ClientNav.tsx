@@ -21,9 +21,14 @@ const tabs: Tab[] = [
 export default function ClientNav(){
   const p = usePathname() || '/'
   return (
-    <nav className='nav'>
+    <nav className='nav' aria-label='주요 탭'>
       {tabs.map(t => (
-        <Link key={t.href} href={t.href} className={'tab ' + (p === t.href ? 'active' : '')}>
+        <Link
+          key={t.href}
+          href={t.href}
+          className={'tab ' + (p === t.href ? 'active' : '')}
+          aria-current={p === t.href ? 'page' : undefined}
+        >
           {t.label}
         </Link>
       ))}
