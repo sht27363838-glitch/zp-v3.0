@@ -1,51 +1,11 @@
-/* v3.1-2 — Global Tokens + Buttons/Badges */
-:root{
-  --bg:#0F1216; --panel:#161A1E; --border:#232A31;
-  --txt:#E6EAF0; --muted:#9BA7B4;
-  --accent:#0EA5E9; --success:#22C55E; --warn:#F59E0B;
-  --danger:#EF4444; --info:#8B5CF6;
-  --ring: 0 0 0 2px rgba(14,165,233,.45);
-}
-*{box-sizing:border-box}
-html,body{margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:Inter, Pretendard, system-ui, -apple-system, 'Segoe UI', Roboto}
-.container{max-width:1080px; margin:24px auto; padding:0 16px}
-.card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px}
-.table{width:100%; border-collapse:collapse}
-.table th,.table td{border-top:1px solid var(--border); padding:10px 8px; text-align:left}
-.table th{color:var(--muted); font-weight:600}
 
-/* Buttons (tokenized) */
-.btn{display:inline-flex; align-items:center; gap:8px;
-  padding:8px 12px; border-radius:12px; border:1px solid #2f3944;
-  background:#232A31; color:var(--txt); font-weight:700; font-size:12px;
-  transition:transform .08s ease, box-shadow .2s ease, background .2s ease; text-decoration:none;
-}
-.btn:hover{transform:translateY(-1px)}
-.btn:focus-visible{outline:none; box-shadow:var(--ring)}
-.btn:disabled{opacity:.5; cursor:not-allowed}
-
-/* Variants */
-.btn.primary{background:var(--accent); color:#0F1216; border-color:#0891B2}
-.btn.success{background:var(--success); color:#0F1216; border-color:#16A34A}
-.btn.warn{background:var(--warn); color:#0F1216; border-color:#D97706}
-.btn.danger{background:var(--danger); color:#0F1216; border-color:#DC2626}
-.btn.info{background:var(--info); color:#0F1216; border-color:#7C3AED}
-.btn.ghost{background:transparent; border-color:var(--border); color:var(--txt)}
-.btn.outline{background:transparent}
-
-/* Sizes */
-.btn.sm{padding:6px 10px; border-radius:10px; font-size:11px}
-.btn.lg{padding:10px 14px; border-radius:14px; font-size:13px}
-
-/* Badges */
-.badge{display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:700; border:1px solid #2f3944; background:#232A31; color:var(--txt)}
-.badge.success{background:rgba(34,197,94,.18); border-color:#14532D; color:#34D399}
-.badge.primary{background:rgba(14,165,233,.18); border-color:#0B7285; color:#38BDF8}
-.badge.warn{background:rgba(245,158,11,.20); border-color:#B45309; color:#FBBF24}
-.badge.danger{background:rgba(239,68,68,.20); border-color:#B91C1C; color:#F87171}
-.badge.info{background:rgba(139,92,246,.20); border-color:#6D28D9; color:#A78BFA}
-
-/* HUD helpers */
-.kpi{cursor:pointer}
-.mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space:pre-wrap}
-.footer-muted{color:var(--muted); font-size:12px}
+:root{--bg:#0F1216;--panel:#161A1E;--border:#232A31;--txt:#E6EAF0;--muted:#9BA7B4;--accent:#0EA5E9;--success:#22C55E;--warn:#F59E0B;--danger:#EF4444;--info:#8B5CF6}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:Inter,Pretendard,system-ui}
+.container{max-width:1080px;margin:24px auto;padding:0 16px}.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.nav{position:sticky;top:0;z-index:40;display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(15,18,22,.8);backdrop-filter:blur(8px)}
+.tab{padding:8px 10px;border-radius:10px;color:var(--txt);text-decoration:none;border:1px solid transparent;font-weight:700;font-size:13px}
+.tab:hover{border-color:var(--border);background:#13171b}.tab.active{background:rgba(14,165,233,.14);border-color:#0B7285;color:#E6EAF0;box-shadow:0 0 0 1px rgba(14,165,233,.25) inset}
+@media (max-width:960px){.nav{overflow-x:auto;white-space:nowrap}}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;border:1px solid #2f3944;background:#232A31;color:var(--txt);font-weight:700;font-size:12px}
+.btn.primary{background:var(--accent);color:#0F1216;border-color:#0891B2}.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid #2f3944;background:#232A31;color:var(--txt)}
+.badge.warn{background:rgba(245,158,11,.20);border-color:#B45309;color:#FBBF24}
