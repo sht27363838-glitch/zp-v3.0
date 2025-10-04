@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+// Tabs (C5 앞, C6 뒤)
 const tabs = [
   ['/', 'C0 지휘소'],
   ['/growth', 'C1 유입'],
@@ -13,12 +14,13 @@ const tabs = [
   ['/data', '데이터'],
   ['/report', '주간리포트'],
   ['/tools', '도구'],
-]
+] as const
+
 export default function Nav(){
-  const p=usePathname()
+  const p = usePathname()
   return <div className='nav'>
-    {tabs.map(([href,label])=>
-      <Link key={href} href={href} className={p===href?'active':''}>{label}</Link>
-    )}
+    {tabs.map(([href,label])=> (
+      <Link key={href} href={href as any} className={p===href?'active':''}>{label}</Link>
+    ))}
   </div>
 }
