@@ -6,6 +6,13 @@ import { computeKpi, decisionGate, fmt } from '../_lib/patch_calc'
 
 type Log = { ts:number, channel:string, action:string }
 
+const btn = {
+  base: { padding:'6px 10px', borderRadius:12, fontSize:12, fontWeight:600, border:'1px solid transparent', cursor:'pointer' } as React.CSSProperties,
+  primary: { background:'#0EA5E9', color:'#0F1216', borderColor:'#0891B2' } as React.CSSProperties,
+  neutral: { background:'#232A31', color:'#E6EAF0', borderColor:'#2f3944' } as React.CSSProperties,
+  danger:  { background:'#EF4444', color:'#0F1216', borderColor:'#DC2626' } as React.CSSProperties,
+}
+
 export default function Decisions(){
   const [rows,setRows] = React.useState<any[]>([])
   const [log,setLog] = React.useState<Log[]>([])
@@ -17,7 +24,6 @@ export default function Decisions(){
       const list = Object.entries(by).map(([ch,rs])=>{
         const k = computeKpi(rs as any)
         const CPA = k.total.orders? k.total.ad_cost/k.total.orders : 0
-        // HOTFIX: CTR 은 clicks / visits 로 계산 (impressions 컬럼 의존 제거)
         const CTR = (k.total.clicks||0) / Math.max(1, (k.total.visits||0))
         const act = decisionGate({ROAS:k.ROAS, AOV:k.AOV, CPA, CTR})
         return {channel:ch, ROAS:k.ROAS, AOV:k.AOV, CPA, CTR, action:act}
@@ -47,11 +53,24 @@ export default function Decisions(){
               <td>{fmt.n(Math.round(r.CPA||0))}</td>
               <td>{fmt.n(Math.round(r.AOV||0))}</td>
               <td>{(r.CTR*100).toFixed(2)}%</td>
-              <td><span className={'badge '+(r.action==='SCALE'?'success':r.action==='KEEP'?'primary':'danger')}>{r.action}</span></td>
               <td>
-                <button className='badge primary' onClick={()=>doAction(r.channel,'예산↑')}>예산↑</button>{' '}
-                <button className='badge' onClick={()=>doAction(r.channel,'보류')}>보류</button>{' '}
-                <button className='badge danger' onClick={()=>doAction(r.channel,'중지')}>중지</button>
+                <span className={'badge '+(r.action==='SCALE'?'success':r.action==='KEEP'?'primary':'danger')}>
+                  {r.action}
+                </span>
+              </td>
+              <td style={{display:'flex', gap:8}}>
+                <button
+                  aria-label='예산 증액'
+                  style={{...btn.base, ...btn.primary}}
+                  onClick={()=>doAction(r.channel,'예산↑')}>예산↑</button>
+                <button
+                  aria-label='보류'
+                  style={{...btn.base, ...btn.neutral}}
+                  onClick={()=>doAction(r.channel,'보류')}>보류</button>
+                <button
+                  aria-label='중지'
+                  style={{...btn.base, ...btn.danger}}
+                  onClick={()=>doAction(r.channel,'중지')}>중지</button>
               </td>
             </tr>
           ))}
