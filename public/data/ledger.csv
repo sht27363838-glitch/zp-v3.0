@@ -1,2 +1,3 @@
 date,quest_id,type,stable_amt,edge_amt,lock_until,proof_url
-2025-10-03,weekly_boss,weekly,30000,8000,2025-11-02,https://…
+2025-10-03,weekly_boss,weekly,30000,8000,2025-11-02,https://example.com/proof1
+2025-10-04,daily_loop,daily,4000,0,2025-10-11,https://example.com/proof2
