@@ -16,7 +16,8 @@ function pickAmount(row: Row, candidates: string[]) {
 export default function RewardsPage() {
   // 로컬스토리지의 ledger CSV 로드
   const raw = readCsvLS('ledger') || '';
-  const rows: Row[] = useMemo(() => (raw ? parseCsv(raw).rows : []), [raw]);
+  // 🔧 핵심 수정: parseCsv(raw) 자체가 행 배열을 반환하므로 .rows 제거
+  const rows: Row[] = useMemo(() => (raw ? (parseCsv(raw) as Row[]) : []), [raw]);
 
   // 합계 계산 (한국어/영문 헤더 모두 대응)
   const totals = useMemo(() => {
