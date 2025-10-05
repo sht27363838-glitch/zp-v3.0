@@ -1,46 +1,28 @@
+'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type Tab = { href: string; label: string };
+const tabs = [
+  ['/',        '지휘소'],
+  ['/growth',  '유입'],
+  ['/commerce','전환'],
+  ['/rewards', '보상'],
+  ['/ops',     '운영'],
+  ['/experiments','실험'],
+  ['/decisions','결정큐'],
+  ['/data',    '데이터'],
+  ['/report',  '리포트'],
+  ['/tools',   '도구'],
+] as const;
 
-const tabs: Tab[] = [
-  { href: '/',          label: '지휘소' },
-  { href: '/growth',    label: '유입' },
-  { href: '/commerce',  label: '전환' },
-  { href: '/rewards',   label: '보상' },
-  { href: '/ops',       label: '운영' },
-  { href: '/experiments', label: '실험' },
-  { href: '/report',    label: '리포트' },
-  { href: '/tools',     label: '도구' },
-  { href: '/data',      label: '데이터' }
-];
-
-export default function Nav() {
+export default function Nav(){
   const p = usePathname() || '/';
   return (
     <div className="nav">
-      {tabs.map(t => (
-        <Link
-          key={t.href}
-          href={t.href}
-          className={'tab ' + (p === t.href ? 'active' : '')}
-        >
-          {t.label}
-        </Link>
+      {tabs.map(([href,label])=>(
+        <Link key={href} href={href as any} className={'tab '+(p===href?'active':'')}>{label}</Link>
       ))}
-      <style jsx>{`
-        .nav { display:flex; gap:8px; flex-wrap:wrap; }
-        .tab {
-          padding:8px 12px; border-radius:10px;
-          background:#161A1E; color:#E6EAF0; border:1px solid #232A31;
-          font-size:14px; line-height:20px; text-decoration:none;
-        }
-        .tab:hover { outline:1px solid #0EA5E9; }
-        .tab.active {
-          background:#0EA5E9; color:#0B1118; border-color:#0EA5E9;
-          font-weight:600;
-        }
-      `}</style>
     </div>
   );
 }
+
