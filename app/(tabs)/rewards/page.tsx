@@ -1,81 +1,91 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { readCsvFromLocal, parseCsv } from '../../_lib/readCsv'
-import { num, fmt } from '../../_lib/num'
+import React, { useMemo } from 'react';
+import { readCsvLS, parseCsv } from '../../_lib/readCsv';
+import { num, fmt } from '../../_lib/num';
 
-type LedgerRow = {
-  date?: string
-  quest_id?: string
-  type?: string
-  stable_amt?: string
-  edge_amt?: string
-  lock_until?: string
-  proof_url?: string
+type Row = Record<string, string>;
+
+function pickAmount(row: Row, candidates: string[]) {
+  for (const k of candidates) {
+    if (k in row) return num(row[k]);
+  }
+  return 0;
 }
 
-export default function RewardsPage(){
-  const [rows, setRows] = React.useState<LedgerRow[]>([])
-  const [summary, setSummary] = React.useState({stable:0, edge:0, total:0})
+export default function RewardsPage() {
+  // 로컬스토리지의 ledger CSV 로드
+  const raw = readCsvLS('ledger') || '';
+  const rows: Row[] = useMemo(() => (raw ? parseCsv(raw).rows : []), [raw]);
 
-  React.useEffect(()=>{
-    const csv = readCsvFromLocal('ledger')
-    const list = parseCsv(csv) as LedgerRow[]
-    const stable = list.reduce((s,r)=> s + num(r.stable_amt), 0)
-    const edge   = list.reduce((s,r)=> s + num(r.edge_amt), 0)
-    setRows(list)
-    setSummary({stable, edge, total: stable+edge})
-  },[])
+  // 합계 계산 (한국어/영문 헤더 모두 대응)
+  const totals = useMemo(() => {
+    let stable = 0; // 안정/정산
+    let pledge = 0; // 잇지/예약
+    for (const r of rows) {
+      stable += pickAmount(r, ['안정', 'stable', 'settled']);
+      pledge += pickAmount(r, ['잇지', 'pledge', 'promised']);
+    }
+    return { stable, pledge, total: stable + pledge };
+  }, [rows]);
 
   return (
-    <div className="page">
-      <h1>Rewards (Ledger)</h1>
-      <div className="kpis">
-        <div className="tile">
-          <div className="label">안정 합계</div>
-          <div className="value">{fmt(summary.stable,0)} 원</div>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Rewards (Ledger)</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="opacity-70 text-sm mb-1">안정 합계</div>
+          <div className="text-xl font-semibold">{fmt(totals.stable)}</div>
         </div>
-        <div className="tile">
-          <div className="label">엣지 합계</div>
-          <div className="value">{fmt(summary.edge,0)} 원</div>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="opacity-70 text-sm mb-1">잇지 합계</div>
+          <div className="text-xl font-semibold">{fmt(totals.pledge)}</div>
         </div>
-        <div className="tile">
-          <div className="label">총 보상</div>
-          <div className="value">{fmt(summary.total,0)} 원</div>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="opacity-70 text-sm mb-1">총 보상</div>
+          <div className="text-xl font-semibold">{fmt(totals.total)}</div>
         </div>
       </div>
 
-      <div style={{overflow:'auto'}}>
-        <table className="table">
-          <thead>
+      <div className="rounded-xl border border-white/10 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-white/5">
             <tr>
-              <th>일자</th>
-              <th>미션</th>
-              <th>유형</th>
-              <th style={{textAlign:'right'}}>안정</th>
-              <th style={{textAlign:'right'}}>엣지</th>
-              <th>락업 종료</th>
-              <th>증빙</th>
+              <th className="px-4 py-3">일자</th>
+              <th className="px-4 py-3">미션</th>
+              <th className="px-4 py-3">유형</th>
+              <th className="px-4 py-3">안정</th>
+              <th className="px-4 py-3">잇지</th>
+              <th className="px-4 py-3">비고</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r,i)=>(
-              <tr key={i}>
-                <td>{r.date || ''}</td>
-                <td>{r.quest_id || ''}</td>
-                <td>{r.type || ''}</td>
-                <td style={{textAlign:'right'}}>{fmt(num(r.stable_amt),0)}</td>
-                <td style={{textAlign:'right'}}>{fmt(num(r.edge_amt),0)}</td>
-                <td>{r.lock_until || ''}</td>
-                <td>{r.proof_url ? <a href={r.proof_url} target="_blank" rel="noreferrer">링크</a> : '-'}</td>
+            {rows.length === 0 ? (
+              <tr>
+                <td className="px-4 py-6 opacity-70" colSpan={6}>
+                  데이터가 없습니다. <b>도구</b> 탭에서 <code>ledger</code> CSV를 저장해 주세요.
+                </td>
               </tr>
-            ))}
-            {rows.length===0 && (
-              <tr><td colSpan={7} style={{opacity:.7}}>데이터가 없습니다. Tools 탭에서 ledger CSV를 저장해 주세요.</td></tr>
+            ) : (
+              rows.map((r, i) => (
+                <tr key={i} className="odd:bg-white/[0.02]">
+                  <td className="px-4 py-3">{r['date'] || r['일자'] || ''}</td>
+                  <td className="px-4 py-3">{r['mission'] || r['미션'] || ''}</td>
+                  <td className="px-4 py-3">{r['type'] || r['유형'] || ''}</td>
+                  <td className="px-4 py-3">
+                    {fmt(pickAmount(r, ['안정', 'stable', 'settled']))}
+                  </td>
+                  <td className="px-4 py-3">
+                    {fmt(pickAmount(r, ['잇지', 'pledge', 'promised']))}
+                  </td>
+                  <td className="px-4 py-3">{r['note'] || r['비고'] || ''}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
     </div>
-  )
+  );
 }
