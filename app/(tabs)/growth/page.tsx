@@ -59,7 +59,8 @@ export default function Growth() {
         <p className="badge">kpi_daily CSV를 먼저 업로드하세요(도구 탭).</p>
       )}
 
-      <div style={{overflow:auto}}>
+      {/* ⬇⬇⬇ 여기가 오류였음: auto 를 문자열로 */}
+      <div style={{ overflow: 'auto' }}>
         <table className="league">
           <thead>
             <tr>
