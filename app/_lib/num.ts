@@ -1,3 +1,13 @@
-export const num = (v:any)=>{ if(v==null) return 0; const n = parseFloat(String(v).replace(/,/g,'')); return Number.isFinite(n)?n:0; };
-export const fmt = (n:number)=> n.toLocaleString('ko-KR',{maximumFractionDigits:2});
-export const pct = (v:number)=> (v*100).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%';
+export const num = (v: any, d = 0) => {
+  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/,/g, ''));
+  return isNaN(n) ? d : n;
+};
+
+export const fmt = (v: number, digits = 2) => {
+  if (!isFinite(v)) return '0';
+  // 금액/지표 공용 포맷(천단위 콤마)
+  return Number(v).toLocaleString('ko-KR', { maximumFractionDigits: digits });
+};
+
+export const pct = (v: number, digits = 2) =>
+  `${(v * 100).toFixed(digits)}%`;
