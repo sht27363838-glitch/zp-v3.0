@@ -1,6 +1,6 @@
 'use client';
-import { readCsvFromLocal } from '../_lib/readCsv';
-import { num, fmt } from '../_lib/num';
+import { readCsvFromLocal } from '../../_lib/readCsv';
+import { num, fmt } from '../../_lib/num';
 
 export default function Growth(){
   const kpi = readCsvFromLocal('kpi_daily');
