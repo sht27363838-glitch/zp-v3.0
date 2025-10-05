@@ -1,32 +1,48 @@
-// 로컬스토리지에 저장된 CSV 읽기 + 간단 파서
-export function readCsvFromLocal(name:string){
-  if(typeof window==='undefined') return [] as any[];
-  const raw = localStorage.getItem('csv:'+name) || '';
-  if(!raw) return [];
-  return parseCsv(raw);
-}
-export function saveCsvToLocal(name:string, text:string){
-  if(typeof window==='undefined') return;
-  localStorage.setItem('csv:'+name, text);
-}
-export function parseCsv(text:string){
-  const lines = text.trim().split(/\r?\n/);
-  if(!lines.length) return [];
-  const headers = lines[0].split(',').map(h=>h.trim());
-  return lines.slice(1).map(line=>{
-    const cells = line.split(','); const obj:any = {};
-    headers.forEach((h,i)=> obj[h]=cells[i]?.trim() ?? '');
+'use client';
+
+export type Row = Record<string, string | number>;
+const KEY = (name: string) => `csv:${name}`;
+
+/** CSV 텍스트 → 객체 배열 */
+export function parseCsv(csvText: string): Row[] {
+  const lines = csvText.trim().split(/\r?\n/);
+  if (lines.length === 0) return [];
+  const headers = lines[0].split(',').map(s => s.trim());
+  return lines.slice(1).filter(Boolean).map(line => {
+    const cells = line.split(',').map(s => s.trim());
+    const obj: Row = {};
+    headers.forEach((h, i) => obj[h] = cells[i] ?? '');
     return obj;
   });
 }
-export function csvTemplate(name:'kpi_daily'|'ledger'|'creative_results'){
-  if(name==='kpi_daily') return `date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews
-2025-10-01,meta,1000,120,30,20,500000,250000,1,3
-2025-10-02,meta,900,110,28,18,430000,210000,0,2
-2025-10-02,tiktok,800,100,20,12,300000,150000,0,1`;
-  if(name==='ledger') return `date,quest_id,type,stable_amt,edge_amt,lock_until,proof_url
-2025-10-01,Q-DAILY,daily,10000,0,2025-10-08,
-2025-10-02,Q-WIN,weekly,15000,5000,2025-11-01,`;
-  return `date,creative_id,impressions,clicks,spend,orders,revenue
-2025-10-01,A1,10000,120,100000,8,200000`;
+
+/** 객체 배열 → CSV 텍스트 */
+export function toCsv(rows: Row[]): string {
+  if (!rows.length) return '';
+  const headers = Object.keys(rows[0]);
+  const body = rows.map(r => headers.map(h => (r[h] ?? '')).join(',')).join('\n');
+  return `${headers.join(',')}\n${body}`;
+}
+
+/** 로컬스토리지에 CSV 텍스트 저장 */
+export function saveCsv(name: string, csvText: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEY(name), csvText);
+}
+
+/** 로컬스토리지에서 CSV 읽어 파싱 */
+export function readCsvFromLocal(name: string): Row[] {
+  if (typeof window === 'undefined') return [];
+  const txt = localStorage.getItem(KEY(name)) || '';
+  try { return txt ? parseCsv(txt) : []; } catch { return []; }
+}
+
+/** 샘플 템플릿(헤더만) 제공 */
+export function sampleTemplate(name: string): string {
+  const templates: Record<string, string> = {
+    kpi_daily: 'date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews\n',
+    creative_results: 'date,creative_id,impressions,clicks,spend,orders,revenue\n',
+    ledger: 'date,quest_id,type,stable_amt,edge_amt,lock_until,proof_url\n',
+  };
+  return templates[name] ?? '';
 }
