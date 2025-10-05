@@ -1,31 +1,65 @@
-/**
- * CSV helpers for client-only usage (localStorage-backed).
- * Keys are stored as `csv:<name>` (e.g., csv:kpi_daily, csv:ledger).
- */
+'use client'
 
-export function readCsvFromLocal(name: string): string {
-  if (typeof window === 'undefined') return '';
-  return window.localStorage.getItem(`csv:${name}`) || '';
-}
+// Lightweight CSV helpers backed by localStorage
+// Keys look like: 'csv:ledger', 'csv:kpi_daily', etc.
 
-export function writeCsvToLocal(name: string, csv: string) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(`csv:${name}`, csv);
-}
+export type CsvRows = Array<Record<string, string>>;
 
-export function parseCsv(csv: string): Array<Record<string, string>> {
-  if (!csv) return [];
-  const lines = csv.trim().split(/\r?\n/);
+export function parseCsv(text: string): CsvRows {
+  if (!text || !text.trim()) return [];
+  const lines = text.replace(/\r\n?/g, '\n').split('\n').filter(l => l.length > 0);
   if (lines.length === 0) return [];
-  const headers = lines[0].split(',').map(h=>h.trim());
-  const rows: Array<Record<string,string>> = [];
-  for (let i=1; i<lines.length; i++) {
-    const cols = lines[i].split(','); // simple CSV (no quoted commas)
-    const r: Record<string,string> = {};
-    for (let j=0; j<headers.length; j++) {
-      r[headers[j]] = (cols[j] ?? '').trim();
+  const header = splitCsvLine(lines[0]);
+  const rows: CsvRows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCsvLine(lines[i]);
+    const row: Record<string, string> = {};
+    for (let c = 0; c < header.length; c++) {
+      row[header[c]] = (cols[c] ?? '').trim();
     }
-    rows.push(r);
+    rows.push(row);
   }
   return rows;
 }
+
+// Simple CSV line splitter supporting basic quoted fields
+function splitCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { // escaped quote
+        cur += '"'; i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      out.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+export function readCsvFromLocal(name: string): { raw: string; rows: CsvRows } {
+  if (typeof window === 'undefined') return { raw: '', rows: [] };
+  const key = 'csv:' + name;
+  const raw = window.localStorage.getItem(key) || '';
+  const rows = parseCsv(raw);
+  return { raw, rows };
+}
+
+export function writeCsvToLocal(name: string, raw: string): void {
+  if (typeof window === 'undefined') return;
+  const key = 'csv:' + name;
+  window.localStorage.setItem(key, raw);
+}
+
+// ---- Compatibility aliases (so existing pages keep working) ----
+export const readCsvLS = readCsvFromLocal;
+export const writeCsvLS = writeCsvToLocal;
