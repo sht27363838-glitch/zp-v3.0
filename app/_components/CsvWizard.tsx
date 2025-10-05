@@ -1,69 +1,76 @@
-'use client';
-import React, { useRef, useState } from 'react';
-import { parseCsv, saveCsv, sampleTemplate } from '../_lib/readCsv';
+'use client'
+import React, {useState} from 'react';
+import { readCsvLS, writeCsvLS } from '../_lib/readCsv';
+
+const EXPECT: Record<string,string[]> = {
+  kpi_daily: ['date','channel','visits','clicks','carts','orders','revenue','ad_cost','returns','reviews'],
+  creative_results: ['date','creative_id','impressions','clicks','spend','orders','revenue'],
+  ledger: ['date','quest_id','type','stable_amt','edge_amt','lock_until','proof_url']
+};
+
+const DEMO: Record<string,string> = {
+  kpi_daily: `date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews
+2025-10-01,meta,1200,180,60,18,540000,240000,1,3
+2025-10-02,meta,1000,160,50,15,420000,210000,2,4
+2025-10-03,naver,800,72,30,10,300000,90000,0,2
+2025-10-04,ttads,900,110,40,12,360000,150000,1,1
+2025-10-05,meta,950,140,42,14,420000,170000,1,2`,
+  creative_results: `date,creative_id,impressions,clicks,spend,orders,revenue
+2025-10-01,A1,30000,90,80000,6,180000
+2025-10-02,A2,25000,70,70000,5,150000
+2025-10-03,B1,18000,45,40000,3,90000`,
+  ledger: `date,quest_id,type,stable_amt,edge_amt,lock_until,proof_url
+2025-10-02,MQ1-1,daily,5000,0,2025-10-09,https://example.com/proof1
+2025-10-04,WB-1,weekly,20000,5000,2025-10-11,https://example.com/proof2`
+};
 
 export default function CsvWizard(){
-  const [msg, setMsg] = useState<string>('');
-  const fileRef = useRef<HTMLInputElement|null>(null);
+  const [key,setKey] = useState<keyof typeof EXPECT>('kpi_daily');
+  const [csv,setCsv] = useState(readCsvLS('kpi_daily') || '');
+  const [msg,setMsg] = useState('');
 
-  const downloadTemplate = (name: string) => {
-    const blob = new Blob([sampleTemplate(name)], {type:'text/csv;charset=utf-8;'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${name}.csv`;
-    a.click();
-    setMsg(`${name}.csv 템플릿 다운로드`);
-  };
+  const load = (k: keyof typeof EXPECT)=>{
+    setKey(k);
+    setCsv(readCsvLS(k) || '');
+    setMsg('');
+  }
 
-  const onUpload = async (name: string, e: React.ChangeEvent<HTMLInputElement>)=>{
-    const f = e.target.files?.[0]; if(!f) return;
-    const text = await f.text();
-    // 유효성 체크(헤더 존재)
-    const rows = parseCsv(text);
-    if (!rows.length && !text.startsWith(sampleTemplate(name).split('\n')[0])) {
-      setMsg('CSV 형식이 올바르지 않습니다.');
-      return;
-    }
-    saveCsv(name, text);
-    setMsg(`${name}.csv 업로드 완료(로컬 저장)`);
-    e.target.value = '';
-  };
+  const injectDemo = ()=>{
+    setCsv(DEMO[key]);
+    setMsg('데모 데이터를 불러왔습니다. 검증 후 저장하세요.');
+  }
+
+  const validate = ()=>{
+    if (!csv.trim()){ setMsg('CSV가 비어있습니다.'); return; }
+    const first = csv.trim().split(/\r?\n/)[0];
+    const got = first.split(',').map(s=>s.trim());
+    const need = EXPECT[key];
+    const ok = need.every(h => got.includes(h));
+    setMsg(ok ? '✅ 헤더 검증 통과' : `❌ 헤더 불일치. 필요: ${need.join(', ')}`);
+  }
+
+  const save = ()=>{
+    writeCsvLS(key, csv);
+    setMsg('💾 저장 완료 (브라우저 로컬스토리지). 대시보드에서 즉시 반영됩니다.');
+  }
 
   return (
-    <div className='stack gap'>
-      <div className='row gap wrap'>
-        <button className='btn' onClick={()=>downloadTemplate('kpi_daily')}>kpi_daily 템플릿</button>
-        <button className='btn' onClick={()=>downloadTemplate('creative_results')}>creative_results 템플릿</button>
-        <button className='btn' onClick={()=>downloadTemplate('ledger')}>ledger 템플릿</button>
+    <div className="tool-card">
+      <h2>CSV 업로드 위저드</h2>
+      <div className="row">
+        <label>데이터셋</label>
+        <select value={key} onChange={e=>load(e.target.value as any)}>
+          <option value="kpi_daily">kpi_daily</option>
+          <option value="creative_results">creative_results</option>
+          <option value="ledger">ledger</option>
+        </select>
+        <button className="btn" onClick={injectDemo}>데모 주입</button>
+        <button className="btn" onClick={validate}>검증</button>
+        <button className="btn primary" onClick={save}>저장</button>
       </div>
-
-      <div className='row gap wrap'>
-        <label className='uploader'>
-          <input ref={fileRef} type='file' accept='.csv' onChange={(e)=>onUpload('kpi_daily',e)} hidden/>
-          <span className='btn accent'>kpi_daily 업로드</span>
-        </label>
-        <label className='uploader'>
-          <input type='file' accept='.csv' onChange={(e)=>onUpload('creative_results',e)} hidden/>
-          <span className='btn accent'>creative_results 업로드</span>
-        </label>
-        <label className='uploader'>
-          <input type='file' accept='.csv' onChange={(e)=>onUpload('ledger',e)} hidden/>
-          <span className='btn accent'>ledger 업로드</span>
-        </label>
-      </div>
-
-      {msg && <p className='badge info'>{msg}</p>}
-      <style jsx>{`
-        .wrap{flex-wrap:wrap}
-        .uploader{display:inline-block}
-        .btn{padding:8px 12px;border-radius:10px;border:1px solid #232A31;background:#161A1E;color:#E6EAF0}
-        .btn.accent{border-color:#0EA5E9;background:#0EA5E911}
-        .row{display:flex;gap:10px;align-items:center}
-        .stack{display:flex;flex-direction:column;gap:14px}
-        .badge{display:inline-block;padding:6px 10px;border-radius:10px;border:1px solid #232A31;background:#161A1E;color:#9BA7B4}
-        .badge.info{border-color:#8B5CF6;color:#E6EAF0}
-        .gap{gap:14px}
-      `}</style>
+      <p className="muted">필수 헤더: {EXPECT[key].join(', ')}</p>
+      <textarea value={csv} onChange={e=>setCsv(e.target.value)} rows={14} spellCheck={false} />
+      <div className="status">{msg}</div>
     </div>
-  );
+  )
 }
