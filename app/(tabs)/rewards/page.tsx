@@ -1,57 +1,81 @@
-'use client';
+'use client'
 
-import { readCsvFromLocal } from '../../_lib/readCsv';
-import { num, fmt, pct } from '../../_lib/num';
+import React from 'react'
+import { readCsvFromLocal, parseCsv } from '../../_lib/readCsv'
+import { num, fmt } from '../../_lib/num'
+
+type LedgerRow = {
+  date?: string
+  quest_id?: string
+  type?: string
+  stable_amt?: string
+  edge_amt?: string
+  lock_until?: string
+  proof_url?: string
+}
 
 export default function RewardsPage(){
-  const ledger = readCsvFromLocal('ledger');
+  const [rows, setRows] = React.useState<LedgerRow[]>([])
+  const [summary, setSummary] = React.useState({stable:0, edge:0, total:0})
 
-  const totalStable = ledger.reduce((s:any,r:any)=> s + num(r.stable_amt), 0);
-  const totalEdge   = ledger.reduce((s:any,r:any)=> s + num(r.edge_amt), 0);
-  const total = totalStable + totalEdge;
-  const edgeShare = total ? totalEdge/total : 0;
+  React.useEffect(()=>{
+    const csv = readCsvFromLocal('ledger')
+    const list = parseCsv(csv) as LedgerRow[]
+    const stable = list.reduce((s,r)=> s + num(r.stable_amt), 0)
+    const edge   = list.reduce((s,r)=> s + num(r.edge_amt), 0)
+    setRows(list)
+    setSummary({stable, edge, total: stable+edge})
+  },[])
 
-  // 간단 락업 테이블
   return (
-    <div className="stack">
-      <section className="card">
-        <h2>C4 보상 엔진</h2>
-        <div className="row gap wrap">
-          <div className="kpi"><div className="lab">안정 누적</div><div className="val">{fmt(totalStable)}</div></div>
-          <div className="kpi"><div className="lab">엣지 누적</div><div className="val">{fmt(totalEdge)}</div></div>
-          <div className="kpi"><div className="lab">총 보상</div><div className="val">{fmt(total)}</div></div>
-          <div className="kpi"><div className="lab">엣지 비중</div><div className="val">{pct(edgeShare)}</div></div>
+    <div className="page">
+      <h1>Rewards (Ledger)</h1>
+      <div className="kpis">
+        <div className="tile">
+          <div className="label">안정 합계</div>
+          <div className="value">{fmt(summary.stable,0)} 원</div>
         </div>
-      </section>
+        <div className="tile">
+          <div className="label">엣지 합계</div>
+          <div className="value">{fmt(summary.edge,0)} 원</div>
+        </div>
+        <div className="tile">
+          <div className="label">총 보상</div>
+          <div className="value">{fmt(summary.total,0)} 원</div>
+        </div>
+      </div>
 
-      <section className="card">
-        <h3>트랜잭션</h3>
-        {!ledger.length && <p className="badge warn">ledger.csv 업로드 필요(도구 탭)</p>}
-        {!!ledger.length && (
-          <div className='table-wrap'>
-            <table>
-              <thead>
-                <tr>
-                  <th>날짜</th><th>미션</th><th>유형</th>
-                  <th className='num'>안정</th><th className='num'>엣지</th><th>락업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ledger.map((r:any, i:number)=>(
-                  <tr key={i}>
-                    <td>{r.date}</td>
-                    <td>{r.quest_id}</td>
-                    <td>{r.type}</td>
-                    <td className='num'>{fmt(num(r.stable_amt))}</td>
-                    <td className='num'>{fmt(num(r.edge_amt))}</td>
-                    <td>{r.lock_until || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <div style={{overflow:'auto'}}>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>일자</th>
+              <th>미션</th>
+              <th>유형</th>
+              <th style={{textAlign:'right'}}>안정</th>
+              <th style={{textAlign:'right'}}>엣지</th>
+              <th>락업 종료</th>
+              <th>증빙</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td>{r.date || ''}</td>
+                <td>{r.quest_id || ''}</td>
+                <td>{r.type || ''}</td>
+                <td style={{textAlign:'right'}}>{fmt(num(r.stable_amt),0)}</td>
+                <td style={{textAlign:'right'}}>{fmt(num(r.edge_amt),0)}</td>
+                <td>{r.lock_until || ''}</td>
+                <td>{r.proof_url ? <a href={r.proof_url} target="_blank" rel="noreferrer">링크</a> : '-'}</td>
+              </tr>
+            ))}
+            {rows.length===0 && (
+              <tr><td colSpan={7} style={{opacity:.7}}>데이터가 없습니다. Tools 탭에서 ledger CSV를 저장해 주세요.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  )
 }
