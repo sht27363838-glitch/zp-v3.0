@@ -1,7 +1,7 @@
 'use client';
-import { readCsvFromLocal } from '../_lib/readCsv';
-import { num, fmt, pct } from '../_lib/num';
-import KpiTile from '../_components/KpiTile';
+import { readCsvFromLocal } from '../../_lib/readCsv';
+import { num, fmt, pct } from '../../_lib/num';
+import KpiTile from '../../_components/KpiTile';
 
 export default function ReportPage(){
   const kpi = readCsvFromLocal('kpi_daily');
