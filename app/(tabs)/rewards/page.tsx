@@ -9,8 +9,11 @@ import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
 
 type Row = { [k:string]: string|number }
 
-export default function Rewards(){
+export default function RewardsPage(){
+  if (typeof window === 'undefined') return null 
   const rules = loadRules()
+   const raw = readCsvLS('ledger') || ''
+  const rows = useMemo(()=> raw? parseCsv(raw): [], [raw])
 
   // KPI 요약(보상 배지 판단용)
   const kraw = readCsvLS('kpi_daily') || ''
