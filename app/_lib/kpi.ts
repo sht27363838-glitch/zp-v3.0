@@ -103,11 +103,13 @@ export function lastNDays(rows: NormRow[], n: number): NormRow[] {
 }
 
 // 기존 series 함수 자리에 이걸로 교체
-export function series(rows: NormRow[], metric: keyof NormRow, n: number = 30): number[] {
-  const picked = lastNDays(rows, n)
-  return picked.map(r => Number((r as any)[metric] || 0))
-}
-
+export function series(
+  rows: NormRow[],
+  metric: keyof NormRow,
+  n: number = 30
+): number[] {
+  const picked = n ? lastNDays(rows, n) : rows
+  return picked.map((r) => Number((r as any)[metric] ?? 0))
 }
 
 /** 요약치(합계+KPI) — 선택적으로 최근 N일만 대상으로 계산 */
