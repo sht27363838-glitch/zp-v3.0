@@ -118,21 +118,34 @@ export default function CsvWizard(){
   );
 }
 
-function Preview({csv}:{csv:string}){
-  const rows = useMemo(()=> parseCsv(csv).slice(0,5), [csv]);
-  if(!rows.length) return null;
-  const headers = Object.keys(rows[0]);
+function Preview({ csv }: { csv: string }) {
+  const table = useMemo(() => (csv ? parseCsv(csv) : { headers: [] as string[], rows: [] as any[] }), [csv]);
+  const rows = table.rows.slice(0, 5);
+  if (!rows.length) return null;
+
+  // headers가 비어 있으면 첫 행의 키를 사용
+  const headers = table.headers.length ? table.headers : Object.keys(rows[0]);
+
   return (
-    <div style={{marginTop:12}}>
-      <div className="muted" style={{marginBottom:4}}>미리보기(상위 5행)</div>
-      <div style={{maxHeight:240, overflow:'auto'}}>
-        <table className="table">
-          <thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead>
-          <tbody>
-            {rows.map((r,i)=><tr key={i}>{headers.map(h=><td key={h}>{r[h]}</td>)}</tr>)}
-          </tbody>
-        </table>
-      </div>
+    <div className="preview">
+      <table className="w-full text-sm">
+        <thead>
+          <tr>
+            {headers.map(h => (
+              <th key={h} className="px-2 py-1 text-left opacity-70">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              {headers.map(h => (
+                <td key={h} className="px-2 py-1 border-t border-white/10">{String((r as any)[h] ?? '')}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
