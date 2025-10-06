@@ -1,36 +1,44 @@
 // app/_lib/rules.ts
-// 클라이언트 전용 저장(localStorage) 접근이 포함되므로, 이 모듈은
-// 'use client'인 컴포넌트들에서만 임포트해 사용하십시오.
+// 클라이언트 전용 저장(localStorage) 접근이 포함되므로,
+// 'use client' 컴포넌트에서 임포트해 사용하십시오.
 
 export type Rules = {
   capRatio: number
+  // 바벨 밴드(목표/가드레일) — UI 에디터에서 편집
+  barbell: {
+    stableMin: number; // 0.70
+    stableMax: number; // 0.85
+    edgeMin:   number; // 0.15
+    edgeMax:   number; // 0.30
+  }
   triggers: {
     dailyLoop:  { stablePct: number; edgePct: number; cooldownH: number }
     weeklyBoss: { stablePct: number; edgePct: number; cooldownD: number }
     monthlyBoss:{ stablePct: number; edgePct: number; cooldownD: number }
   }
   debuffs: {
-    adFatigue:    { ctrLt: number }                      // CTR 임계
+    adFatigue:    { ctrLt: number }                      // CTR 임계(예: 0.006=0.6%)
     returnsSpike: { rateGt: number; payoutCut: number }  // 반품률 초과 시 감액 비율
   }
 }
 
 export const DEFAULT_RULES: Rules = {
   capRatio: 0.10,
+  barbell: { stableMin: 0.70, stableMax: 0.85, edgeMin: 0.15, edgeMax: 0.30 },
   triggers: {
     dailyLoop:  { stablePct: 0.2, edgePct: 0.0, cooldownH: 24 },
     weeklyBoss: { stablePct: 2.0, edgePct: 0.5, cooldownD: 7  },
     monthlyBoss:{ stablePct: 5.0, edgePct: 1.0, cooldownD: 30 },
   },
   debuffs: {
-    adFatigue:    { ctrLt: 0.006 },       // 0.6%
+    adFatigue:    { ctrLt: 0.006 },
     returnsSpike: { rateGt: 0.03, payoutCut: 0.5 },
   }
 }
 
 const STORAGE_KEY = 'rewards_rules.json'
 
-// 얕은 숫자 정규화 헬퍼
+// 숫자 정규화
 function nn(v: any, fallback: number){ 
   const n = Number(v)
   return isFinite(n) ? n : fallback
@@ -42,6 +50,12 @@ export function mergeWithDefaults(partial: Partial<Rules>): Rules {
   const p = partial || {}
   return {
     capRatio: nn((p as any).capRatio, d.capRatio),
+    barbell: {
+      stableMin: nn((p as any)?.barbell?.stableMin, d.barbell.stableMin),
+      stableMax: nn((p as any)?.barbell?.stableMax, d.barbell.stableMax),
+      edgeMin:   nn((p as any)?.barbell?.edgeMin,   d.barbell.edgeMin),
+      edgeMax:   nn((p as any)?.barbell?.edgeMax,   d.barbell.edgeMax),
+    },
     triggers: {
       dailyLoop: {
         stablePct: nn((p as any)?.triggers?.dailyLoop?.stablePct, d.triggers.dailyLoop.stablePct),
@@ -64,8 +78,8 @@ export function mergeWithDefaults(partial: Partial<Rules>): Rules {
         ctrLt: nn((p as any)?.debuffs?.adFatigue?.ctrLt, d.debuffs.adFatigue.ctrLt),
       },
       returnsSpike: {
-        rateGt:   nn((p as any)?.debuffs?.returnsSpike?.rateGt,   d.debuffs.returnsSpike.rateGt),
-        payoutCut:nn((p as any)?.debuffs?.returnsSpike?.payoutCut,d.debuffs.returnsSpike.payoutCut),
+        rateGt:    nn((p as any)?.debuffs?.returnsSpike?.rateGt,    d.debuffs.returnsSpike.rateGt),
+        payoutCut: nn((p as any)?.debuffs?.returnsSpike?.payoutCut, d.debuffs.returnsSpike.payoutCut),
       }
     }
   }
@@ -84,15 +98,14 @@ export function loadRules(): Rules {
   }
 }
 
-// 저장(에디터에서 사용) — ★ 누락되어 빌드 실패를 유발한 함수
+// 저장(룰 에디터에서 사용)
 export function saveRules(next: Partial<Rules> | Rules){
   if (typeof window === 'undefined') return
-  // 기본값과 병합하여 안전 저장
   const merged = mergeWithDefaults(next as any)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
 }
 
-// 룰 평가(배지/잠금/감액 판단)
+// 가드 평가(배지/잠금/감액 판단)
 export type GuardInput = {
   revenue: number
   ad_cost: number
@@ -109,3 +122,4 @@ export function evalGuards(m: GuardInput, rules: Rules){
   const returnsHigh = returnsRate > rules.debuffs.returnsSpike.rateGt
   return { returnsRate, adFatigue, returnsHigh }
 }
+
