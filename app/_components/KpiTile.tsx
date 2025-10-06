@@ -1,22 +1,50 @@
+// app/_components/KpiTile.tsx
 'use client'
-import React from 'react';
+import type { ReactNode } from 'react'
 
-export default function KpiTile({label, value, note, onClick}:{label:string; value:string; note?:string; onClick?:()=>void}){
+type Props = {
+  label: string
+  /** 문자열/숫자/커스텀 노드 모두 허용 → pct(), fmt() 결과 어떤 형태여도 안전 */
+  value: string | number | ReactNode
+  /** 작은 보조 설명(선택) */
+  note?: string
+  /** 클릭 시 드릴다운 등(선택) */
+  onClick?: () => void
+  /** 경고/위험 등 색상 토큰(선택): 'ok' | 'warn' | 'danger' */
+  tone?: 'ok' | 'warn' | 'danger'
+}
+
+export default function KpiTile({ label, value, note, onClick, tone }: Props) {
+  // 접근성: 버튼/디브 자동 전환
+  const Tag: any = onClick ? 'button' : 'div'
+  // 색상 토큰(프로젝트 공통 .badge/.btn 디자인과 어울리는 가벼운 보정)
+  const toneClass =
+    tone === 'danger'
+      ? 'ring-1 ring-red-400/60 bg-red-50'
+      : tone === 'warn'
+      ? 'ring-1 ring-amber-400/60 bg-amber-50'
+      : tone === 'ok'
+      ? 'ring-1 ring-emerald-400/60 bg-emerald-50'
+      : 'ring-1 ring-slate-200 bg-white'
+
   return (
-    <button className="kpi-tile" onClick={onClick}>
-      <div className="kpi-label">{label}</div>
-      <div className="kpi-value">{value}</div>
-      {note ? <div className="kpi-note">{note}</div> : null}
-      <style jsx>{`
-        .kpi-tile{display:flex;flex-direction:column;gap:6px;align-items:flex-start;
-          background:var(--panel);border:1px solid var(--border);border-radius:14px;
-          padding:14px 16px; text-align:left; cursor:pointer}
-        .kpi-label{color:var(--muted);font-size:12px}
-        .kpi-value{font-size:22px;font-weight:700}
-        .kpi-note{font-size:12px;color:var(--muted)}
-        .kpi-tile:hover{outline:2px solid var(--accent); outline-offset:0}
-        .kpi-tile:focus-visible{outline:3px solid var(--accent)}
-      `}</style>
-    </button>
-  );
+    <Tag
+      className={
+        'kpi-tile rounded-xl p-4 shadow-sm hover:shadow-md transition ' +
+        'text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ' +
+        toneClass +
+        (onClick ? ' cursor-pointer' : '')
+      }
+      onClick={onClick}
+      aria-label={onClick ? `${label} 상세 열기` : undefined}
+    >
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className="mt-1 text-2xl font-semibold leading-tight">
+        {value}
+      </div>
+      {note ? (
+        <div className="mt-1 text-[11px] text-slate-400">{note}</div>
+      ) : null}
+    </Tag>
+  )
 }
