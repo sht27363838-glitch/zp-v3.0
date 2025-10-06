@@ -1,100 +1,99 @@
-'use client';
+// app/(tabs)/report/page.tsx
+'use client'
+export const dynamic = 'force-dynamic'
 
-import React, { useMemo } from 'react';
-import { readCsvLS, parseCsv, type CsvRows } from '../../_lib/readCsv';
-import { num, pct } from '../../_lib/num';
+import React, { useMemo } from 'react'
+import { readCsvLS, parseCsv } from '../../_lib/readCsv'
+import { num, fmt, pct } from '../../_lib/num'
+import { loadRules, evalGuards } from '../../_lib/rules'
+import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
+import KpiTile from '../../_components/KpiTile'
 
-type Row = {
-  date?: string;
-  channel?: string;
-  visits?: string | number;
-  clicks?: string | number;
-  carts?: string | number;
-  orders?: string | number;
-  revenue?: string | number;
-  ad_cost?: string | number;
-  returns?: string | number;
-  reviews?: string | number;
-};
-
-export default function ReportPage() {
-  // 1) CSV 로드
-  const raw = readCsvLS('kpi_daily') || '';
-
-  // 2) ✅ parseCsv는 CsvRows(=배열)만 반환 → 기본값도 항상 []
-  const rows: CsvRows = useMemo(() => (raw ? parseCsv(raw) : []), [raw]);
-
-  // 3) 집계
-  let visits = 0, clicks = 0, carts = 0, orders = 0, revenue = 0, adCost = 0, returns = 0, reviews = 0;
-  for (const r of rows as Row[]) {
-    visits  += num(r.visits);
-    clicks  += num(r.clicks);
-    carts   += num(r.carts);
-    orders  += num(r.orders);
-    revenue += num(r.revenue);
-    adCost  += num(r.ad_cost);
-    returns += num(r.returns);
-    reviews += num(r.reviews);
-  }
-
-  const ROAS = adCost ? revenue / adCost : 0;
-  const CR   = visits ? orders / visits : 0;
-  const AOV  = orders ? revenue / orders : 0;
-  const RtnR = orders ? returns / orders : 0;
-
-  return (
-    <div className="page">
-      <h1>지휘소(요약)</h1>
-
-      <div className="kpis grid" style={{gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
-        <KpiCard label="매출"  value={`₩${Math.round(revenue).toLocaleString()}`} sub="Revenue (Σ)"/>
-        <KpiCard label="ROAS"  value={`${ROAS.toFixed(2)}x`} sub="revenue / ad_cost"/>
-        <KpiCard label="전환율" value={pct(CR)} sub="orders / visits"/>
-        <KpiCard label="AOV"   value={`₩${Math.round(AOV).toLocaleString()}`} sub="revenue / orders"/>
-        <KpiCard label="반품률" value={pct(RtnR)} sub="returns / orders"/>
-        <KpiCard label="리뷰"  value={`${reviews.toLocaleString()}개`} sub="Reviews (Σ)"/>
-      </div>
-
-      <div style={{marginTop:16, maxHeight: 420, overflow: 'auto'}}>
-        <table className="table compact">
-          <thead>
-            <tr>
-              <th>date</th><th>channel</th><th>visits</th><th>clicks</th>
-              <th>carts</th><th>orders</th><th>revenue</th><th>ad_cost</th>
-              <th>returns</th><th>reviews</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(rows as Row[]).map((r, i) => (
-              <tr key={i}>
-                <td>{r.date || ''}</td>
-                <td>{r.channel || ''}</td>
-                <td>{num(r.visits)}</td>
-                <td>{num(r.clicks)}</td>
-                <td>{num(r.carts)}</td>
-                <td>{num(r.orders)}</td>
-                <td>{Math.round(num(r.revenue)).toLocaleString()}</td>
-                <td>{Math.round(num(r.ad_cost)).toLocaleString()}</td>
-                <td>{num(r.returns)}</td>
-                <td>{num(r.reviews)}</td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr><td colSpan={10} className="muted">데이터가 없습니다. Tools 탭에서 kpi_daily를 업로드/저장해 주세요.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+function getSettingsProfit(): number {
+  // settings.csv: last_month_profit, cap_ratio, edge_min, edge_max
+  const raw = readCsvLS('settings') || ''
+  if (!raw) return 1_000_000 // 기본값
+  const data = parseCsv(raw)
+  const row = data.rows?.[0] as any
+  const p = Number(row?.last_month_profit ?? 0)
+  return isFinite(p) && p > 0 ? p : 1_000_000
 }
 
-function KpiCard({label, value, sub}:{label:string; value:string; sub?:string}){
+export default function Report() {
+  // KPI 로드
+  const raw = readCsvLS('kpi_daily') || ''
+  const data = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
+
+  // 합계
+  let visits = 0, clicks = 0, orders = 0, revenue = 0, adCost = 0, returns = 0
+  for (const r of data.rows) {
+    visits += num((r as any).visits)
+    clicks += num((r as any).clicks)
+    orders += num((r as any).orders)
+    revenue += num((r as any).revenue)
+    adCost += num((r as any).ad_cost)
+    returns += num((r as any).returns)
+  }
+
+  const ROAS = adCost ? revenue / adCost : 0
+  const CR = visits ? orders / visits : 0
+  const AOV = orders ? revenue / orders : 0
+  const returnsRate = orders ? returns / orders : 0
+
+  // 경보·룰
+  const rules = loadRules()
+  const guards = evalGuards(
+    { revenue, ad_cost: adCost, orders, visits, returns, freq: undefined, ctr: clicks && visits ? clicks / visits : 0 },
+    rules
+  )
+
+  // 쿨다운 & 보상 버튼
+  const lastMonthProfit = getSettingsProfit()
+  const cooldownKey = 'dailyLoop.last'
+  const last = lastTimeKey(cooldownKey)
+  const canClick = Date.now() - last > (rules.triggers.dailyLoop.cooldownH * 3600_000)
+
+  function payoutDaily() {
+    if (!canClick) return
+    const cut = guards.returnsHigh ? rules.debuffs.returnsSpike.payoutCut : 1
+    const stable = (rules.triggers.dailyLoop.stablePct / 100) * lastMonthProfit * cut
+    const edge = guards.adFatigue ? 0 : (rules.triggers.dailyLoop.edgePct / 100) * lastMonthProfit * cut
+    appendLedger({
+      date: new Date().toISOString().slice(0, 10),
+      mission: 'Daily Loop',
+      type: 'daily',
+      stable, edge,
+      note: guards.adFatigue ? 'EDGE LOCK' : (guards.returnsHigh ? 'PAYOUT CUT' : ''),
+      lock_until: ''
+    })
+    markTime(cooldownKey)
+    alert('✅ 보상 기록 완료 (일일)')
+  }
+
   return (
-    <div className="card">
-      <div className="label">{label}</div>
-      <div className="value" style={{fontSize:22, fontWeight:700}}>{value}</div>
-      {sub && <div className="muted" style={{fontSize:12}}>{sub}</div>}
+    <div className="pad">
+      <h2 className="title">지휘소 C0</h2>
+
+      <div className="kpi-grid">
+        <KpiTile label="매출" value={fmt(revenue)} />
+        <KpiTile label="ROAS" value={pct(ROAS)} />
+        <KpiTile label="전환율" value={pct(CR)} />
+        <KpiTile label="AOV" value={fmt(AOV)} />
+        <KpiTile label="반품률" value={pct(returnsRate)} />
+        <KpiTile label="광고비" value={fmt(adCost)} />
+      </div>
+
+      <div className="row gap">
+        <button className="btn primary" disabled={!canClick} onClick={payoutDaily}>
+          보상 기록(일일)
+        </button>
+        {guards.adFatigue && <span className="badge warn">엣지 잠금</span>}
+        {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
+      </div>
+
+      <div className="mt-4 text-dim text-sm">
+        쿨다운: {canClick ? '지금 가능' : '대기 중'} · 기준수익(전월): {fmt(lastMonthProfit)}
+      </div>
     </div>
-  );
+  )
 }
