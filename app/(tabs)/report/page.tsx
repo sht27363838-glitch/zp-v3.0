@@ -2,7 +2,7 @@
 
 import React, {useMemo} from 'react'
 import { readCsvLS, parseCsv } from '../../_lib/readCsv'
-import { num, fmt, pct } from '../../_lib/num'
+import { num, fmt, pct, kfmt  } from '../../_lib/num'
 
 import { loadRules, evalGuards } from '../../_lib/rules'
 import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
@@ -19,6 +19,8 @@ function Tile({label, value, sub}:{label:string; value:string; sub?:string}){
 }
 
 export default function Report(){
+  if (typeof window === 'undefined') return null
+
   // kpi_daily 로드/파싱 (로컬스토리지)
   const raw = readCsvLS('kpi_daily') || ''
   const rows = useMemo(()=> raw? parseCsv(raw): [], [raw])
