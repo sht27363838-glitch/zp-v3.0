@@ -1,59 +1,70 @@
 'use client'
-import React, {useMemo} from 'react';
-import { readCsvLS, parseCsv } from '../../_lib/readCsv';
-import { num } from '../../_lib/num';
+import React, {useMemo} from 'react'
+import { readCsvLS, parseCsv, type CsvRows } from '../../_lib/readCsv'
+import { num, pct } from '../../_lib/num'
+
+type Kpi = {
+  date?: string
+  channel?: string
+  visits?: string
+  clicks?: string
+  orders?: string
+  revenue?: string
+  ad_cost?: string
+}
 
 export default function Growth(){
-  const raw = readCsvLS('kpi_daily');
-  const rows = useMemo(()=> raw ? parseCsv(raw) : [], [raw]);
+  const raw = readCsvLS('kpi_daily') || ''
+  const data: CsvRows = useMemo(
+    () => (raw ? parseCsv(raw) : { headers: [], rows: [] }),
+    [raw]
+  )
+  const rows = data.rows as Kpi[]
 
-  const agg: Record<string, any> = {};
+  // 채널별 집계
+  const by: Record<string, {channel:string; clicks:number; spend:number; orders:number; revenue:number}> = {}
   for (const r of rows) {
-    const ch = r.channel || 'unknown';
-    const o = (agg[ch] ||= { channel: ch, clicks: 0, spend: 0, orders: 0, revenue: 0 });
-    o.clicks += num(r.clicks);
-    o.spend  += num(r.ad_cost);
-    o.orders += num(r.orders);
-    o.revenue+= num(r.revenue);
+    const ch = r.channel || 'unknown'
+    const o = (by[ch] ||= {channel: ch, clicks:0, spend:0, orders:0, revenue:0})
+    o.clicks  += num(r.clicks)
+    o.spend   += num(r.ad_cost)
+    o.orders  += num(r.orders)
+    o.revenue += num(r.revenue)
   }
 
-  const list = Object.values(agg).map((r:any)=>{
-    const CPA = r.orders ? (r.spend||0)/r.orders : 0;
-    const ROAS = (r.spend||0) ? (r.revenue||0)/(r.spend||1) : 0;
-    const CTR  = (r.clicks||0) / 1; // 노출 없는 CSV 기준
-    const warn: string[] = [];
-    if (ROAS < 1.5) warn.push('ROAS↓');
-    if (CPA >  (r.revenue && r.orders ? (r.revenue/r.orders)*0.35 : 0)) warn.push('CPA↑');
-    if (CTR < 0.01) warn.push('CTR↓');
-    return {...r, CPA, ROAS, CTR, warn};
-  }).sort((a:any,b:any)=> (b.ROAS||0) - (a.ROAS||0));
+  const list = Object.values(by).map(r=>{
+    const CPA  = r.orders? r.spend / r.orders : 0
+    const ROAS = r.spend? r.revenue / r.spend : 0
+    const CTR  = 0 // impressions 미사용 버전
+    return { ...r, CPA, ROAS, CTR }
+  }).sort((a,b)=> (b.ROAS||0) - (a.ROAS||0))
 
   return (
     <div className="page">
-      <h2>채널 리그</h2>
-      <div style={{overflow:'auto'}}>
+      <h1>Growth (C1)</h1>
+
+      <div className="table-wrap" style={{maxHeight:480, overflow:'auto'}}>
         <table className="league">
           <thead>
             <tr>
-              <th>채널</th><th>클릭</th><th>지출</th><th>주문</th><th>매출</th><th>ROAS</th><th>CPA</th><th>경보</th>
+              <th>채널</th><th>클릭</th><th>주문</th><th>매출</th><th>비용</th><th>ROAS</th><th>CPA</th>
             </tr>
           </thead>
           <tbody>
-            {list.map((r:any)=>(
-              <tr key={r.channel}>
+            {list.map((r,i)=>(
+              <tr key={i}>
                 <td>{r.channel}</td>
                 <td>{r.clicks}</td>
-                <td>{Math.round(r.spend)}</td>
                 <td>{r.orders}</td>
-                <td>{Math.round(r.revenue)}</td>
-                <td>{(r.ROAS||0).toFixed(2)}</td>
-                <td>{Math.round(r.CPA||0)}</td>
-                <td>{r.warn.map((w:string)=><span key={w} className={`badge ${w.includes('ROAS')?'danger':w.includes('CPA')?'warn':'info'}`}>{w}</span>)}</td>
+                <td>{r.revenue}</td>
+                <td>{r.spend}</td>
+                <td>{pct(r.ROAS)}</td>
+                <td>{r.CPA.toFixed(0)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
     </div>
-  );
+  )
 }
