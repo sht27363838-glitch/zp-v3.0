@@ -2,8 +2,11 @@
 
 import React, { useMemo } from 'react'
 import { readCsvLS, parseCsv, type CsvRow } from '../../_lib/readCsv'
-import { num, fmt, pct } from '../../_lib/num'
+import { num, fmt } from '../../_lib/num'
 import KpiTile from '../../_components/KpiTile'
+
+// 퍼센트 문자열을 보장하는 로컬 헬퍼(항상 string 반환)
+const pct1 = (v: number): string => `${(v * 100).toFixed(1)}%`
 
 // settings.csv에서 last_month_profit 불러오기 (없으면 기본값)
 function readLastMonthProfit(): number {
@@ -19,13 +22,13 @@ export default function ReportPage() {
   // 원시 CSV 로드
   const raw = readCsvLS('kpi_daily') || ''
 
-  // 한 번만 파싱
+  // 한 번만 파싱해 {headers, rows} 형태로 강제
   const data = useMemo(
     () => (raw ? parseCsv(raw) : { headers: [] as string[], rows: [] as CsvRow[] }),
     [raw]
   )
 
-  // 합계 계산(헤더 한/영 혼용 대응)
+  // 합계 계산
   let visits = 0,
     clicks = 0,
     orders = 0,
@@ -48,9 +51,6 @@ export default function ReportPage() {
   const returnsRate = orders ? returns / orders : 0
 
   const lastMonthProfit = readLastMonthProfit()
-
-  // 퍼센트 문자열(소수 1자리) 강제 헬퍼
-  const pct1 = (v: number) => pct(v, 1) // string 반환
 
   return (
     <div className="page">
