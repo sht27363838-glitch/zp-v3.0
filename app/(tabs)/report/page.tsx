@@ -3,28 +3,25 @@
 export const dynamic = 'force-dynamic'
 
 import React, { useMemo } from 'react'
-import { readCsvLS, parseCsv } from '../../_lib/readCsv'
+import { readCsvLS, parseCsv, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
 import { loadRules, evalGuards } from '../../_lib/rules'
 import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
 import KpiTile from '../../_components/KpiTile'
 
 function getSettingsProfit(): number {
-  // settings.csv: last_month_profit, cap_ratio, edge_min, edge_max
   const raw = readCsvLS('settings') || ''
-  if (!raw) return 1_000_000 // 기본값
-  const data = parseCsv(raw)
+  if (!raw) return 1_000_000
+  const data: CsvTable = parseCsv(raw)
   const row = data.rows?.[0] as any
   const p = Number(row?.last_month_profit ?? 0)
   return isFinite(p) && p > 0 ? p : 1_000_000
 }
 
 export default function Report() {
-  // KPI 로드
   const raw = readCsvLS('kpi_daily') || ''
-  const data = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
+  const data: CsvTable = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
 
-  // 합계
   let visits = 0, clicks = 0, orders = 0, revenue = 0, adCost = 0, returns = 0
   for (const r of data.rows) {
     visits += num((r as any).visits)
@@ -40,18 +37,16 @@ export default function Report() {
   const AOV = orders ? revenue / orders : 0
   const returnsRate = orders ? returns / orders : 0
 
-  // 경보·룰
   const rules = loadRules()
   const guards = evalGuards(
-    { revenue, ad_cost: adCost, orders, visits, returns, freq: undefined, ctr: clicks && visits ? clicks / visits : 0 },
+    { revenue, ad_cost: adCost, orders, visits, returns, freq: undefined, ctr: visits ? clicks / visits : 0 },
     rules
   )
 
-  // 쿨다운 & 보상 버튼
   const lastMonthProfit = getSettingsProfit()
   const cooldownKey = 'dailyLoop.last'
   const last = lastTimeKey(cooldownKey)
-  const canClick = Date.now() - last > (rules.triggers.dailyLoop.cooldownH * 3600_000)
+  const canClick = Date.now() - last > rules.triggers.dailyLoop.cooldownH * 3600_000
 
   function payoutDaily() {
     if (!canClick) return
@@ -84,9 +79,7 @@ export default function Report() {
       </div>
 
       <div className="row gap">
-        <button className="btn primary" disabled={!canClick} onClick={payoutDaily}>
-          보상 기록(일일)
-        </button>
+        <button className="btn primary" disabled={!canClick} onClick={payoutDaily}>보상 기록(일일)</button>
         {guards.adFatigue && <span className="badge warn">엣지 잠금</span>}
         {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
       </div>
