@@ -1,75 +1,111 @@
 'use client'
-import React, {useMemo, useState} from 'react';
-import KpiTile from '../../_components/KpiTile';
-import { readCsvLS, parseCsv } from '../../_lib/readCsv';
-import { num, kfmt, pct } from '../../_lib/num';
 
-function useKpi(){
-  const csv = readCsvLS('kpi_daily') || '';
-  const rows = useMemo(()=> csv? parseCsv(csv): [], [csv]);
-  const total = rows.reduce((a:any,r:any)=>{
-    a.visits += num(r.visits); a.clicks += num(r.clicks); a.orders += num(r.orders);
-    a.revenue += num(r.revenue); a.ad_cost += num(r.ad_cost); a.returns += num(r.returns);
-    return a;
-  }, {visits:0,clicks:0,orders:0,revenue:0,ad_cost:0,returns:0});
-  const CR = total.visits? total.orders/total.visits : 0;
-  const AOV = total.orders? total.revenue/total.orders : 0;
-  const ROAS = total.ad_cost? total.revenue/total.ad_cost : 0;
-  const Returns = total.orders? total.returns/total.orders : 0;
+import React, {useMemo} from 'react'
+import { readCsvLS, parseCsv } from '../../_lib/readCsv'
+import { num, fmt, pct } from '../../_lib/num'
 
-  const ledgerCsv = readCsvLS('ledger') || '';
-  const ledgerRows = useMemo(()=> ledgerCsv? parseCsv(ledgerCsv): [], [ledgerCsv]);
-  const rewardsPaid = ledgerRows.reduce((s:any,r:any)=> s + num(r.stable_amt) + num(r.edge_amt), 0);
+import { loadRules, evalGuards } from '../../_lib/rules'
+import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
 
-  return {total, CR, AOV, ROAS, Returns, rewardsPaid, rows};
+// 간단 KPI 타일
+function Tile({label, value, sub}:{label:string; value:string; sub?:string}){
+  return (
+    <div className="card">
+      <div className="muted text-xs">{label}</div>
+      <div className="text-xl font-bold">{value}</div>
+      {sub? <div className="text-xs muted">{sub}</div>: null}
+    </div>
+  )
 }
 
 export default function Report(){
-  const {total, CR, AOV, ROAS, Returns, rewardsPaid, rows} = useKpi();
-  const [modal, setModal] = useState<null | {metric:string}>(null);
+  // kpi_daily 로드/파싱 (로컬스토리지)
+  const raw = readCsvLS('kpi_daily') || ''
+  const rows = useMemo(()=> raw? parseCsv(raw): [], [raw])
 
-  const series = (days:number, key:'revenue'|'orders'|'visits'|'ad_cost'|'returns')=>{
-    const tail = rows.slice(-days);
-    return tail.map((r:any)=>({date: r.date, value: num(r[key])}));
-  };
+  // 합계
+  let visits=0, clicks=0, orders=0, revenue=0, adCost=0, returns=0
+  for(const r of rows){
+    visits  += num(r.visits)
+    clicks  += num(r.clicks)
+    orders  += num(r.orders)
+    revenue += num(r.revenue)
+    adCost  += num(r.ad_cost)
+    returns += num(r.returns)
+  }
+  const ROAS = adCost? (revenue/adCost) : 0
+  const CR   = visits? (orders/visits) : 0
+  const AOV  = orders? (revenue/orders) : 0
+  const CTR  = visits? (clicks/visits) : 0
 
-  const modalBody = ()=>{
-    if (!modal) return null;
-    const keyMap: any = {
-      '매출': 'revenue', '주문': 'orders', '방문': 'visits', '광고비':'ad_cost', '반품':'returns'
-    };
-    const key = keyMap[modal.metric] || 'revenue';
-    const last7 = series(7, key).reduce((s:any, x:any)=> s + x.value, 0);
-    const last30 = series(30, key).reduce((s:any, x:any)=> s + x.value, 0);
-    return (
-      <div className="modal">
-        <div className="modal-card">
-          <h3>{modal.metric} 추이(합계)</h3>
-          <table>
-            <thead><tr><th>구간</th><th>합계</th></tr></thead>
-            <tbody>
-              <tr><td>최근 7일</td><td>{kfmt(last7)}</td></tr>
-              <tr><td>최근 30일</td><td>{kfmt(last30)}</td></tr>
-            </tbody>
-          </table>
-          <button className="btn" onClick={()=>setModal(null)}>닫기</button>
-        </div>
-      </div>
-    )
-  };
+  // 보상/룰 평가에 필요한 입력
+  const rules = loadRules()
+  const guards = evalGuards({
+    revenue, ad_cost: adCost, orders, visits, returns, ctr: CTR
+  }, rules)
 
+  // 전월 순익(설정) — Tools/Settings 에서 저장
+  const lastMonthProfit = Number(localStorage.getItem('last_month_profit') || 0)
+
+  // 일일 루프 쿨다운
+  const cooldownKey = 'dailyLoop.last'
+  const last = lastTimeKey(cooldownKey)
+  const canDaily = Date.now() - last > rules.triggers.dailyLoop.cooldownH*3600_000
+
+  function payoutDaily(){
+    if(!canDaily) return
+    const cut = guards.returnsHigh ? rules.debuffs.returnsSpike.payoutCut : 1
+    const stable = (rules.triggers.dailyLoop.stablePct/100) * lastMonthProfit * cut
+    const edge   = guards.adFatigue ? 0 : ((rules.triggers.dailyLoop.edgePct/100) * lastMonthProfit * cut)
+    appendLedger({
+      date: new Date().toISOString().slice(0,10),
+      mission:'Daily Loop', type:'daily',
+      stable, edge,
+      note: guards.adFatigue? 'EDGE LOCK' : (guards.returnsHigh? 'PAYOUT CUT' : ''),
+      lock_until:''
+    })
+    markTime(cooldownKey)
+    alert('보상이 기록되었습니다.')
+  }
+
+  // UI
   return (
     <div className="page">
-      <h1>Command Center</h1>
-      <div className="grid kpis">
-        <KpiTile label="매출" value={kfmt(total.revenue)} onClick={()=>setModal({metric:'매출'})} />
-        <KpiTile label="ROAS" value={(ROAS||0).toFixed(2)} onClick={()=>setModal({metric:'매출'})} />
-        <KpiTile label="CR" value={pct(CR)} onClick={()=>setModal({metric:'주문'})} />
-        <KpiTile label="AOV" value={kfmt(AOV)} onClick={()=>setModal({metric:'주문'})} />
-        <KpiTile label="반품률" value={pct(Returns)} onClick={()=>setModal({metric:'반품'})} />
-        <KpiTile label="보상 총액" value={kfmt(rewardsPaid)} onClick={()=>setModal({metric:'매출'})} />
+      <h1 className="title">C0 · Command Center</h1>
+
+      <div className="grid grid-2 gap-2">
+        <Tile label="매출" value={fmt(revenue)} />
+        <Tile label="ROAS" value={ROAS.toFixed(2)} />
+        <Tile label="전환율" value={pct(CR)} />
+        <Tile label="AOV" value={fmt(AOV)} />
+        <Tile label="반품률" value={pct(orders? returns/orders : 0)} />
+        <Tile label="CTR" value={pct(CTR)} />
       </div>
-      {modalBody()}
+
+      {/* 이상치 배지 */}
+      <div className="flex gap-2 mt-2">
+        {guards.adFatigue && <span className="badge warn">광고 피로(CTR↓)</span>}
+        {guards.returnsHigh && <span className="badge danger">반품률 경보</span>}
+      </div>
+
+      {/* 원클릭 보상 버튼 + 배지 */}
+      <div className="flex items-center gap-3 mt-3">
+        <button className="btn primary" disabled={!canDaily || !lastMonthProfit} onClick={payoutDaily}>
+          보상 기록(일일)
+        </button>
+        {!lastMonthProfit && <span className="badge info">설정에서 전월 순익 입력 필요</span>}
+        {guards.adFatigue && <span className="badge warn">엣지 잠금</span>}
+        {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
+      </div>
+
+      <div className="card mt-4">
+        <div className="muted text-sm">설명</div>
+        <ul className="text-sm">
+          <li>버튼은 쿨다운(24h)과 전월 순익 값이 있을 때만 활성화됩니다.</li>
+          <li>광고 피로(CTR&lt;0.6%)면 엣지 보상 0으로 기입됩니다.</li>
+          <li>반품률 &gt;3%면 보상이 50% 감액됩니다.</li>
+        </ul>
+      </div>
     </div>
   )
 }
