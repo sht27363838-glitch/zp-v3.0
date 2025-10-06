@@ -71,41 +71,51 @@ export function computeKpi(rows: NormRow[]): KpiAgg {
   return { total, ROAS, CR, AOV, returnsRate }
 }
 
-/** raw CSV 문자열에서 곧바로 KPI 산출 */
-export function computeKpiFromRaw(raw: string): KpiAgg {
-  return computeKpi(rowsFromRaw(raw))
+/** 날짜 문자열을 안전하게 비교 가능한 키로 */
+function dkey(s?: string) {
+  // YYYY-MM-DD 가정. 형식 불량일 때는 가장 과거로 취급
+  return /^\d{4}-\d{2}-\d{2}$/.test(s || '') ? (s as string) : '0000-00-00'
 }
 
-/** 채널별 합계 테이블 (C1, growth용) */
-export type ChannelAgg = {
-  channel: string
-  clicks: number
-  spend: number
-  orders: number
-  revenue: number
-  ROAS: number
-  CPA: number
-  CTR: number
-}
-
-export function groupByChannel(rows: NormRow[]): ChannelAgg[] {
-  const by: Record<string, Omit<ChannelAgg, 'ROAS' | 'CPA' | 'CTR'>> = {}
-  let totalVisitsByChannel: Record<string, number> = {}
-
+/** 최근 N일 추출(날짜 기준 합산) */
+export function lastNDays(rows: NormRow[], n: number): NormRow[] {
+  // 날짜별 합산 후 최신 n개의 날짜만 반환
+  const byDate = new Map<string, NormRow>()
   for (const r of rows) {
-    const ch = r.channel || 'unknown'
-    const o = (by[ch] ||= { channel: ch, clicks: 0, spend: 0, orders: 0, revenue: 0 })
+    const k = dkey(r.date)
+    const o = byDate.get(k) || {
+      date: k, channel: undefined,
+      visits: 0, clicks: 0, carts: 0, orders: 0, revenue: 0, ad_cost: 0, returns: 0, reviews: 0
+    }
+    o.visits += r.visits || 0
     o.clicks += r.clicks || 0
-    o.spend += r.ad_cost || 0
+    o.carts += r.carts || 0
     o.orders += r.orders || 0
     o.revenue += r.revenue || 0
-    totalVisitsByChannel[ch] = (totalVisitsByChannel[ch] || 0) + (r.visits || 0)
+    o.ad_cost += r.ad_cost || 0
+    o.returns += r.returns || 0
+    o.reviews += r.reviews || 0
+    byDate.set(k, o)
   }
+  const dates = [...byDate.keys()].sort((a,b)=> a<b?1:-1) // 최신 → 과거
+  const pick = dates.slice(0, Math.max(0,n)).reverse()    // 과거 → 최신
+  return pick.map(k => byDate.get(k)!)
+}
 
-  return Object.values(by).map(o => {
-    const ROAS = o.spend ? o.revenue / o.spend : 0
-    const CPA = o.orders ? o.spend / o.orders : 0
-    const CTR = totalVisitsByChannel[o.channel] ? (o.clicks || 0) / totalVisitsByChannel[o.channel] : 0
-    return { ...o, ROAS, CPA, CTR }
-  })
+/** 시리즈 생성: 특정 지표의 날짜별 합산 값 배열 */
+export function series(rows: NormRow[], metric: keyof NormRow, n: number): number[] {
+  const picked = lastNDays(rows, n)
+  return picked.map(r => Number((r as any)[metric] || 0))
+}
+
+/** 요약치(합계+KPI) — 선택적으로 최근 N일만 대상으로 계산 */
+export function summarize(rows: NormRow[], n?: number): KpiAgg {
+  const scope = n ? lastNDays(rows, n) : rows
+  return computeKpi(scope)
+}
+
+/** === 기존 페이지 호환용 별칭(Shim) === */
+/** CSV -> NormRow[] : app/page.tsx가 기대하는 이름 */
+export function computeKpiRows(raw: string): NormRow[] {
+  return rowsFromRaw(raw)
 }
