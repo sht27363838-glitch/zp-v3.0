@@ -1,10 +1,16 @@
-// app/_lib/num.ts
-export const num = (v: any)=> Number(String(v||'').replace(/[, ]/g,'')) || 0;
-export const fmt = (v: number)=> (isNaN(v)?0:v).toLocaleString();
-export const kfmt = (v: number)=> {
-  const n = isNaN(v)?0:v;
-  if (Math.abs(n) >= 1_000_000) return (n/1_000_000).toFixed(1)+'M';
-  if (Math.abs(n) >= 1_000) return (n/1_000).toFixed(1)+'k';
-  return String(n);
+// 숫자 유틸(계약 고정)
+export const num = (v: any): number => {
+  if (v === null || v === undefined || v === '') return 0;
+  const n = Number(String(v).replace(/,/g,''));
+  return isNaN(n) ? 0 : n;
 };
-export const pct = (v: number)=> `${((isNaN(v)?0:v)*100).toFixed(2)}%`;
+export const fmt = (n: number) =>
+  new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n || 0);
+export const kfmt = (n: number) => {
+  const x = n || 0;
+  if (Math.abs(x) >= 1_000_000_000) return (x/1_000_000_000).toFixed(1)+'B';
+  if (Math.abs(x) >= 1_000_000) return (x/1_000_000).toFixed(1)+'M';
+  if (Math.abs(x) >= 1_000) return (x/1_000).toFixed(1)+'k';
+  return String(x);
+};
+export const pct = (a: number, b: number) => b ? a / b : 0;
