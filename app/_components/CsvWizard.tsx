@@ -4,23 +4,45 @@ import React, {useEffect, useMemo, useState} from 'react';
 import { datasetKeys, DatasetKey, readCsvLS, writeCsvLS, clearCsvLS, lastSavedAt, validateHeaders, requiredHeaders } from '../_lib/readCsv';
 
 const DEMO: Record<DatasetKey, string> = {
+ // 1) 일일 KPI
   kpi_daily: `date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews
 2025-10-01,meta,1000,80,30,10,300000,120000,0,5
 2025-10-01,tiktok,800,60,20,6,150000,70000,0,2
-2025-10-02,meta,1100,90,32,11,330000,130000,0,4
-2025-10-02,tiktok,850,65,22,7,170000,72000,0,2
-2025-10-03,meta,900,70,25,8,240000,90000,0,3
-2025-10-03,tiktok,820,62,21,6,160000,68000,0,1
-`,
-  ledger: `date,mission,type,locked,vested,unlock_end,status
-2025-10-01,리뷰 리워드,stable,0,10000,2025-12-31,진행
-2025-10-02,환불 보정,edgy,0,5000,2025-11-30,완료
-`,
-  creative_results: `date,channel,adset,creative,spend,impressions,clicks,orders,revenue
-2025-10-01,meta,AS1,CR1,50000,20000,200,5,150000
-2025-10-01,tiktok,AS2,CR3,30000,15000,120,3,90000
-`,
-};
+2025-10-02,meta,1100,88,33,11,330000,125000,1,4`,
+
+  // 2) 크리에이티브 성과
+  creative_results: `date,creative_id,impressions,clicks,spend,orders,revenue
+2025-10-01,CR001,50000,700,90000,8,230000
+2025-10-01,CR002,30000,360,40000,3,90000`,
+
+  // 3) 보상 원장(ledger)
+  ledger: `date,type,mission,stable,edge,note,lock_until
+2025-10-01,daily,Daily Loop,30000,0,,2025-10-08
+2025-10-02,weekly,Weekly Boss,60000,15000,,2025-11-01`,
+
+  // 4) 리밸런싱 로그
+  rebalance_log: `date,from_to,amount,reason
+2025-10-03,edge->stable,20000,edge>30% 방어
+2025-10-10,stable->edge,15000,공격 모드`,
+
+  // 5) 커머스 세부 품목
+  commerce_items: `order_id,sku,qty,price,discount,source
+A001,SKU-RED,1,30000,0,meta
+A002,SKU-BLK,2,45000,5000,tiktok`,
+
+  // 6) 구독 정보(있다면)
+  subs: `customer_id,start_date,billing_n,status
+U001,2025-09-15,2,active
+U002,2025-10-01,1,trial`,
+
+  // 7) 반품 사유
+  returns: `order_id,sku,reason,date
+A002,SKU-BLK,사이즈 불만,2025-10-05`,
+
+  // 8) 설정
+  settings: `last_month_profit,cap_ratio,edge_min,edge_max
+2000000,0.10,0.15,0.30`
+}
 
 function tsLabel(ts: number|null){
   if (!ts) return '—';
