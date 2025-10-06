@@ -102,10 +102,12 @@ export function lastNDays(rows: NormRow[], n: number): NormRow[] {
   return pick.map(k => byDate.get(k)!)
 }
 
-/** 시리즈 생성: 특정 지표의 날짜별 합산 값 배열 */
-export function series(rows: NormRow[], metric: keyof NormRow, n: number): number[] {
+// 기존 series 함수 자리에 이걸로 교체
+export function series(rows: NormRow[], metric: keyof NormRow, n: number = 30): number[] {
   const picked = lastNDays(rows, n)
   return picked.map(r => Number((r as any)[metric] || 0))
+}
+
 }
 
 /** 요약치(합계+KPI) — 선택적으로 최근 N일만 대상으로 계산 */
