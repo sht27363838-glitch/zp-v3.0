@@ -1,95 +1,163 @@
 'use client'
-import React, {useState, useEffect} from 'react'
-import {loadRules, saveRules, type Rules} from '../../_lib/rules'
+
+import React, { useEffect, useState } from 'react'
+import { loadRules, saveRules, type Rules } from '../../_lib/rules'
+
+type N = number
+const n = (v: any) => Number.isFinite(Number(v)) ? Number(v) : 0
 
 export default function RulesEditor(){
   const [rules, setRules] = useState<Rules>(loadRules())
-  const [msg, setMsg] = useState<string>('')
+  const [msg, setMsg] = useState('')
 
-  useEffect(()=>{ setRules(loadRules()) },[])
-
-  function update<K extends keyof Rules>(k:K, v:any){
-    setRules({...rules, [k]: v})
-  }
-  function save(){
+  // 저장
+  function onSave(){
     // 간단 검증
-    const {barbell} = rules
-    if(barbell.stableMin + barbell.edgeMin > 1) return setMsg('❌ 최소 비중 합이 100%를 넘습니다.')
-    if(barbell.stableMax + barbell.edgeMax < 1) return setMsg('❌ 최대 비중 합이 100% 미만입니다.')
-    saveRules(rules); setMsg('✅ 저장 완료')
+    const b = rules.barbell
+    if (b.stableMin + b.edgeMin > 1) return setMsg('❌ 최소 비중 합이 100%를 초과합니다.')
+    if (b.stableMax + b.edgeMax < 1) return setMsg('❌ 최대 비중 합이 100% 미만입니다.')
+    saveRules(rules)
+    setMsg('✅ 저장 완료')
+    setTimeout(()=>setMsg(''), 1500)
   }
 
+  // 입력 핸들러 (상위 키)
+  const set = (key: keyof Rules, val: any) => setRules(prev => ({...prev, [key]: val}))
+
+  // 하위(중첩) 전용 헬퍼
+  const setBarbell = (k: keyof Rules['barbell'], v: N) =>
+    setRules(p => ({...p, barbell: {...p.barbell, [k]: v}}))
+
+  const setTrig = (group: keyof Rules['triggers'], k: keyof Rules['triggers'][typeof group], v: N) =>
+    setRules(p => ({...p, triggers: {...p.triggers, [group]: {...p.triggers[group], [k]: v}}}))
+
+  const setDebuff = (group: keyof Rules['debuffs'], k: keyof Rules['debuffs'][typeof group], v: N) =>
+    setRules(p => ({...p, debuffs: {...p.debuffs, [group]: {...p.debuffs[group], [k]: v}}}))
+
+  // UI
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold">Rules Editor</h2>
+    <div className="page">
+      <h1>Rules Editor</h1>
+      {msg && <div className="banner success">{msg}</div>}
 
-      <section className="grid md:grid-cols-2 gap-4">
-        <div className="card">
-          <h3 className="font-semibold mb-2">Cap</h3>
+      <section className="card">
+        <h2>Cap & Barbell</h2>
+        <div className="grid">
           <label className="row">Cap Ratio
-            <input type="number" step="0.01" value={rules.cap_ratio}
-              onChange={e=>update('cap_ratio', Number(e.target.value))}/>
-          </label>
-        </div>
-
-        <div className="card">
-          <h3 className="font-semibold mb-2">Barbell Bands</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="row">Stable Min<input type="number" step="0.01"
-              value={rules.barbell.stableMin}
-              onChange={e=>update('barbell', {...rules.barbell, stableMin:Number(e.target.value)})}/></label>
-            <label className="row">Stable Max<input type="number" step="0.01"
-              value={rules.barbell.stableMax}
-              onChange={e=>update('barbell', {...rules.barbell, stableMax:Number(e.target.value)})}/></label>
-            <label className="row">Edge Min<input type="number" step="0.01"
-              value={rules.barbell.edgeMin}
-              onChange={e=>update('barbell', {...rules.barbell, edgeMin:Number(e.target.value)})}/></label>
-            <label className="row">Edge Max<input type="number" step="0.01"
-              value={rules.barbell.edgeMax}
-              onChange={e=>update('barbell', {...rules.barbell, edgeMax:Number(e.target.value)})}/></label>
-          </div>
-        </div>
-
-        <div className="card">
-          <h3 className="font-semibold mb-2">Lockups</h3>
-          <label className="row">Stable Days
-            <input type="number" value={rules.lockups.stableDays}
-              onChange={e=>update('lockups', {...rules.lockups, stableDays:Number(e.target.value)})}/>
-          </label>
-          <label className="row">Edge Days
-            <input type="number" value={rules.lockups.edgeDays}
-              onChange={e=>update('lockups', {...rules.lockups, edgeDays:Number(e.target.value)})}/>
-          </label>
-        </div>
-
-        <div className="card">
-          <h3 className="font-semibold mb-2">Debuffs</h3>
-          <label className="row">Ad Freq≥
-            <input type="number" step="0.1"
-              value={rules.debuffs.adFatigue.freq}
-              onChange={e=>update('debuffs', {...rules.debuffs, adFatigue:{...rules.debuffs.adFatigue, freq:Number(e.target.value)}})}/>
-          </label>
-          <label className="row">CTR &lt;
-            <input type="number" step="0.001"
-              value={rules.debuffs.adFatigue.ctrLt}
-              onChange={e=>update('debuffs', {...rules.debuffs, adFatigue:{...rules.debuffs.adFatigue, ctrLt:Number(e.target.value)}})}/>
-          </label>
-          <label className="row">Returns &gt;
             <input type="number" step="0.01"
-              value={rules.debuffs.returnsSpike.rateGt}
-              onChange={e=>update('debuffs', {...rules.debuffs, returnsSpike:{...rules.debuffs.returnsSpike, rateGt:Number(e.target.value)}})}/>
+              value={rules.capRatio}
+              onChange={e=>set('capRatio', n(e.target.value))}/>
           </label>
-          <label className="row">Payout Cut(0~1)
-            <input type="number" step="0.1"
-              value={rules.debuffs.returnsSpike.payoutCut}
-              onChange={e=>update('debuffs', {...rules.debuffs, returnsSpike:{...rules.debuffs.returnsSpike, payoutCut:Number(e.target.value)}})}/>
+
+          <label className="row">Stable Min
+            <input type="number" step="0.01"
+              value={rules.barbell.stableMin}
+              onChange={e=>setBarbell('stableMin', n(e.target.value))}/>
+          </label>
+
+          <label className="row">Stable Max
+            <input type="number" step="0.01"
+              value={rules.barbell.stableMax}
+              onChange={e=>setBarbell('stableMax', n(e.target.value))}/>
+          </label>
+
+          <label className="row">Edge Min
+            <input type="number" step="0.01"
+              value={rules.barbell.edgeMin}
+              onChange={e=>setBarbell('edgeMin', n(e.target.value))}/>
+          </label>
+
+          <label className="row">Edge Max
+            <input type="number" step="0.01"
+              value={rules.barbell.edgeMax}
+              onChange={e=>setBarbell('edgeMax', n(e.target.value))}/>
           </label>
         </div>
       </section>
 
-      <div className="flex gap-3">
-        <button className="btn primary" onClick={save}>저장</button>
-        {msg && <span className="badge info">{msg}</span>}
+      <section className="card">
+        <h2>Triggers</h2>
+        <h3>Daily Loop</h3>
+        <div className="grid">
+          <label className="row">Stable % (of last month profit)
+            <input type="number" step="0.1"
+              value={rules.triggers.dailyLoop.stablePct}
+              onChange={e=>setTrig('dailyLoop','stablePct', n(e.target.value))}/>
+          </label>
+          <label className="row">Edge % (of last month profit)
+            <input type="number" step="0.1"
+              value={rules.triggers.dailyLoop.edgePct}
+              onChange={e=>setTrig('dailyLoop','edgePct', n(e.target.value))}/>
+          </label>
+          <label className="row">Cooldown (hours)
+            <input type="number" step="1"
+              value={rules.triggers.dailyLoop.cooldownH}
+              onChange={e=>setTrig('dailyLoop','cooldownH', n(e.target.value))}/>
+          </label>
+        </div>
+
+        <h3>Weekly Boss</h3>
+        <div className="grid">
+          <label className="row">Stable %
+            <input type="number" step="0.1"
+              value={rules.triggers.weeklyBoss.stablePct}
+              onChange={e=>setTrig('weeklyBoss','stablePct', n(e.target.value))}/>
+          </label>
+          <label className="row">Edge %
+            <input type="number" step="0.1"
+              value={rules.triggers.weeklyBoss.edgePct}
+              onChange={e=>setTrig('weeklyBoss','edgePct', n(e.target.value))}/>
+          </label>
+          <label className="row">Cooldown (days)
+            <input type="number" step="1"
+              value={rules.triggers.weeklyBoss.cooldownD}
+              onChange={e=>setTrig('weeklyBoss','cooldownD', n(e.target.value))}/>
+          </label>
+        </div>
+
+        <h3>Monthly Boss</h3>
+        <div className="grid">
+          <label className="row">Stable %
+            <input type="number" step="0.1"
+              value={rules.triggers.monthlyBoss.stablePct}
+              onChange={e=>setTrig('monthlyBoss','stablePct', n(e.target.value))}/>
+          </label>
+          <label className="row">Edge %
+            <input type="number" step="0.1"
+              value={rules.triggers.monthlyBoss.edgePct}
+              onChange={e=>setTrig('monthlyBoss','edgePct', n(e.target.value))}/>
+          </label>
+          <label className="row">Cooldown (days)
+            <input type="number" step="1"
+              value={rules.triggers.monthlyBoss.cooldownD}
+              onChange={e=>setTrig('monthlyBoss','cooldownD', n(e.target.value))}/>
+          </label>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>Debuffs</h2>
+        <div className="grid">
+          <label className="row">Ad Fatigue · CTR &lt;
+            <input type="number" step="0.001"
+              value={rules.debuffs.adFatigue.ctrLt}
+              onChange={e=>setDebuff('adFatigue','ctrLt', n(e.target.value))}/>
+          </label>
+          <label className="row">Returns Spike · Rate &gt;
+            <input type="number" step="0.001"
+              value={rules.debuffs.returnsSpike.rateGt}
+              onChange={e=>setDebuff('returnsSpike','rateGt', n(e.target.value))}/>
+          </label>
+          <label className="row">Payout Cut (0~1)
+            <input type="number" step="0.1"
+              value={rules.debuffs.returnsSpike.payoutCut}
+              onChange={e=>setDebuff('returnsSpike','payoutCut', n(e.target.value))}/>
+          </label>
+        </div>
+      </section>
+
+      <div className="actions">
+        <button className="btn primary" onClick={onSave}>저장</button>
       </div>
     </div>
   )
