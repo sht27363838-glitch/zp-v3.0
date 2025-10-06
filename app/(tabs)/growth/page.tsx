@@ -1,12 +1,12 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
 import React, { useMemo } from 'react'
-import { readCsvLS, parseCsv, type CsvTable } from '../../_lib/readCsv'
+import { readCsvLS, parseCsv, type CsvRow } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
 
-type RowAgg = {
+type Agg = {
   channel: string
+  visits: number
   clicks: number
   spend: number
   orders: number
@@ -14,42 +14,58 @@ type RowAgg = {
 }
 
 export default function Growth() {
+  // 로컬스토리지에서 kpi_daily CSV 원문 읽기
   const raw = readCsvLS('kpi_daily') || ''
-  // 항상 {headers, rows} 형태로 통일
-  const data: CsvTable = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
 
-  // 채널 집계
-  const by: Record<string, RowAgg> = {}
-  let totalOrders = 0
-  for (const r of data.rows as any[]) {
-    const ch = r.channel || 'unknown'
-    const o = (by[ch] ||= { channel: ch, clicks: 0, spend: 0, orders: 0, revenue: 0 })
+  // 한 번만 파싱 (SSR 안전)
+  const data = useMemo(
+    () => (raw ? parseCsv(raw) : { headers: [] as string[], rows: [] as CsvRow[] }),
+    [raw]
+  )
+
+  // 채널별 집계
+  const by: Record<string, Agg> = {}
+  for (const r of data.rows) {
+    const ch = (r.channel as string) || 'unknown'
+    const o =
+      (by[ch] ||= {
+        channel: ch,
+        visits: 0,
+        clicks: 0,
+        spend: 0,
+        orders: 0,
+        revenue: 0,
+      })
+    o.visits += num(r.visits)
     o.clicks += num(r.clicks)
     o.spend += num(r.ad_cost)
     o.orders += num(r.orders)
     o.revenue += num(r.revenue)
-    totalOrders += num(r.orders)
   }
 
-  // 테이블 데이터 + 정렬(ROAS desc)
+  // 표용 최종 리스트 (지표 계산)
   const rows = Object.values(by)
-    .map(r => {
-      const CPA = r.orders ? (r.spend || 0) / r.orders : 0
-      const CTR = 0 // visits 컬럼 없이 단순 표시 유지(원하면 visits로 대체 가능)
-      const ROAS = r.spend ? r.revenue / r.spend : 0
-      return { ...r, CPA, CTR, ROAS }
+    .map((o) => {
+      const ROAS = o.spend ? o.revenue / o.spend : 0
+      const CPA = o.orders ? o.spend / o.orders : 0
+      const CTR = o.visits ? o.clicks / o.visits : 0
+      return { ...o, ROAS, CPA, CTR }
     })
-    .sort((a, b) => (b.ROAS || 0) - (a.ROAS || 0))
+    .sort((a, b) => b.ROAS - a.ROAS)
+
+  // 퍼센트 표기(소수 1자리) 헬퍼
+  const pct1 = (v: number) => pct(v, 1)
 
   return (
-    <div className="pad">
-      <h2 className="title">C1 — 채널 리그</h2>
+    <div className="page">
+      <h1>채널 리그(ROAS/CPA/CTR)</h1>
 
-      <div style={{ maxHeight: 520, overflow: 'auto' }}>
+      <div style={{ maxHeight: 480, overflow: 'auto' }}>
         <table className="league">
           <thead>
             <tr>
               <th>채널</th>
+              <th>방문</th>
               <th>클릭</th>
               <th>주문</th>
               <th>매출</th>
@@ -60,30 +76,30 @@ export default function Growth() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(r => (
+            {rows.map((r) => (
               <tr key={r.channel}>
                 <td>{r.channel}</td>
+                <td>{fmt(r.visits)}</td>
                 <td>{fmt(r.clicks)}</td>
                 <td>{fmt(r.orders)}</td>
                 <td>{fmt(r.revenue)}</td>
                 <td>{fmt(r.spend)}</td>
-                <td>{pct(r.ROAS)}</td>
+                <td>{pct1(r.ROAS)}</td>
                 <td>{fmt(r.CPA)}</td>
-                <td>{pct(r.CTR)}</td>
+                <td>{pct1(r.CTR)}</td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', opacity: 0.7 }}>
-                  업로드된 <code>kpi_daily</code> 데이터가 없습니다. Tools에서 CSV를 넣어주세요.
+                <td colSpan={9} style={{ opacity: 0.7 }}>
+                  업로드된 <code>kpi_daily.csv</code>가 없습니다. Tools에서 데모 업로드 후 다시
+                  보십시오.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-
-      <div className="mt-3 text-sm text-dim">총 주문: {fmt(totalOrders)}</div>
     </div>
   )
 }
