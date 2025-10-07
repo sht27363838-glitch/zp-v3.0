@@ -1,1 +1,65 @@
+/* ===== Base UI (가독성/컴포넌트 공통) ===== */
+:root{
+  --bg: #0b0f14;
+  --panel: #141a22;
+  --panel-2: #0f141b;
+  --text: #dfe6ee;
+  --muted: #97a3b3;
+  --primary: #4fe3c1;
+  --danger: #ff6b6b;
+  --warn: #f0c36a;
+  --ring: rgba(79,227,193,.45);
+  --radius: 14px;
+  --pad: 14px;
+  --gap: 16px;
+  --shadow: 0 6px 22px rgba(0,0,0,.35);
+  --loading: .55;
+}
+
+/* 다크 모드에서 대비 강제 상승 */
+html, body { background: var(--bg); color: var(--text); }
+.page { color: var(--text); }
+h1,h2,h3 { color: var(--text); }
+
+/* 카드/배지/버튼 */
+.card{
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--pad);
+}
+.badge{
+  display:inline-block; font-size:12px; padding:4px 8px;
+  border-radius:999px; background:var(--panel-2); color:var(--text); opacity:.9;
+}
+.badge.warn{ background:rgba(240,195,106,.16); color:#ffd27a; }
+.badge.danger{ background:rgba(255,107,107,.16); color:#ff9898; }
+.btn{
+  appearance:none; border:0; border-radius:12px; padding:10px 14px;
+  background:#1d2530; color:var(--text); cursor:pointer;
+}
+.btn.primary{ background:var(--primary); color:#0a0f13; font-weight:700; }
+.btn:disabled{ opacity:.55; cursor:not-allowed; }
+.btn:focus{ outline:2px solid var(--ring); outline-offset:2px; }
+
+/* 표 */
+.table, table.table{
+  width:100%; border-collapse:separate; border-spacing:0;
+  background:var(--panel); color:var(--text);
+}
+.table th, .table td{
+  padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.04);
+}
+.table thead th{ color:#cfe4ff; font-weight:600; background:rgba(255,255,255,.03); }
+
+/* 스크롤 래퍼(긴 표) */
+.scroll{ max-height:480px; overflow:auto; }
+
+/* 스켈레톤 */
+.skeleton{
+  height:160px; border-radius:var(--radius); background:
+  linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.08), rgba(255,255,255,.03));
+  animation: shine 1.2s linear infinite;
+}
+@keyframes shine{ 0%{background-position:-200px 0} 100%{background-position:calc(200px + 100%) 0} }
 
