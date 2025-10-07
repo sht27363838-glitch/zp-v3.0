@@ -16,7 +16,7 @@ export default function HeatMap({cells}:{cells:Cell[]}){
         {cells.map((c,i)=>(
           <div key={i}
             className="cell"
-            title={`CR ${ (c.cr||0).toFixed(2) }%  · 주문 ${c.orders} · 클릭 ${c.clicks}`}
+            title={`CR ${pct(v.cr,1)} • 주문 ${fmt(v.orders)} • 클릭 ${fmt(v.clicks)}`}
             onClick={()=>open(c)}
             style={{background:heat(c.cr)}}
           />
