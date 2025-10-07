@@ -61,3 +61,21 @@ body{ background:var(--bg); color:var(--text); }
 .scroll{ max-height:480px; overflow:auto; border:1px solid var(--border); border-radius:12px; }
 .skeleton{ height:160px; border-radius:12px; background:linear-gradient(90deg,var(--bg-soft),#202531,var(--bg-soft)); background-size:200% 100%; animation:sk 1.2s linear infinite; border:1px solid var(--border); }
 @keyframes sk{0%{background-position:0% 0}100%{background-position:200% 0}}
+
+/* === Readability hardening === */
+:root{
+  --bg: #0e1116;
+  --panel: #141821;
+  --text: #e9eef5;           /* 더 밝게 */
+  --muted: #aab2bf;          /* 보조 텍스트 */
+  --ring: #7dd3fc;           /* 포커스 링 */
+  --shadow: 0 8px 24px rgba(0,0,0,.45);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#ffffff; --panel:#f5f7fb;
+    --text:#0b1220; --muted:#556070;
+    --shadow: 0 6px 18px rgba(20,30,50,.12);
+  }
+}
+
