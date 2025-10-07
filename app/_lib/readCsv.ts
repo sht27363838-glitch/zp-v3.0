@@ -1,99 +1,116 @@
 // app/_lib/readCsv.ts
-// 로컬스토리지 기반 CSV 관리 + 파서/직렬화 유틸
-export type CsvRow = Record<string, string | number | null>;
+
+export type CsvRow = Record<string, any>;
 export type CsvTable = { headers: string[]; rows: CsvRow[] };
 
-export type DatasetKey =
-  | 'kpi_daily'
-  | 'ledger'
-  | 'creative_results'
-  | 'rebalance_log'
-  | 'commerce_items'
-  | 'subs'
-  | 'returns'
-  | 'settings';
+/** 간단 CSV 파서: 첫 줄은 헤더, 이후는 데이터 */
+export function parseCsv(text: string): CsvTable {
+  const src = (text || "").trim();
+  if (!src) return { headers: [], rows: [] };
 
-export const datasetKeys: DatasetKey[] = [
-  'kpi_daily',
-  'ledger',
-  'creative_results',
-  'rebalance_log',
-  'commerce_items',
-  'subs',
-  'returns',
-  'settings',
-];
+  const lines = src.split(/\r?\n/);
+  const headers = (lines.shift() || "").split(",").map((h) => h.trim());
 
-const LS_PREFIX = 'zp3.csv.';
+  const rows: CsvRow[] = lines
+    .map((line) => line.split(","))
+    .map((cols) => {
+      const row: CsvRow = {};
+      headers.forEach((h, i) => (row[h] = (cols[i] ?? "").trim()));
+      return row;
+    });
 
-const hasWindow = () => typeof window !== 'undefined';
-
-// 로컬스토리지 I/O
-export function readCsvLS(key: string): string {
-  if (typeof window === 'undefined') return '';          // SSR 안전
-  try { return localStorage.getItem(key) || ''; } catch { return ''; }
-  export function pct1(v:number, digits=1){ return `${(v*100).toFixed(digits)}%`;
-
-}
-
-
-export const writeCsvLS = (key: DatasetKey, csv: string) => {
-  if (!hasWindow()) return;
-  localStorage.setItem(LS_PREFIX + key, csv || '');
-  localStorage.setItem(LS_PREFIX + key + '.ts', String(Date.now()));
-};
-
-export const clearCsvLS = (key: DatasetKey) => {
-  if (!hasWindow()) return;
-  localStorage.removeItem(LS_PREFIX + key);
-  localStorage.removeItem(LS_PREFIX + key + '.ts');
-};
-
-export const lastSavedAt = (key: DatasetKey): number => {
-  if (!hasWindow()) return 0;
-  return Number(localStorage.getItem(LS_PREFIX + key + '.ts') || 0);
-};
-
-// CSV <-> Table
-export function parseCsv(csv: string): CsvTable {
-  const lines = (csv || '').trim().split(/\r?\n/).filter(Boolean);
-  if (lines.length === 0) return { headers: [], rows: [] };
-  const headers = lines[0].split(',').map((s) => s.trim());
-  const rows = lines.slice(1).map((line) => {
-    const cols = line.split(',');
-    const obj: CsvRow = {};
-    headers.forEach((h, i) => (obj[h] = cols[i] ?? ''));
-    return obj;
-  });
   return { headers, rows };
 }
 
-export function toCsv(table: CsvTable): string {
-  const { headers, rows } = table;
-  const head = headers.join(',');
-  const body = rows
-    .map((r) => headers.map((h) => (r[h] ?? '')).join(','))
-    .join('\n');
-  return [head, body].filter(Boolean).join('\n');
+/** 로컬스토리지에서 CSV 원문 읽기 (SSR 안전) */
+export function readCsvLS(key: string): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(key) || "";
+  } catch {
+    return "";
+  }
 }
 
-// 스키마 검증 도우미 (업로드 위저드에서 사용)
+/** 로컬스토리지에 CSV 저장 (+ 타임스탬프 보조키) */
+export function writeCsvLS(key: string, csv: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, csv);
+    localStorage.setItem(`${key}.__ts`, String(Date.now()));
+  } catch {}
+}
+
+/** 로컬스토리지 CSV/타임스탬프 삭제 */
+export function clearCsvLS(key: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+    localStorage.removeItem(`${key}.__ts`);
+  } catch {}
+}
+
+/** 마지막 저장 시각(Unix ms) */
+export function lastSavedAt(key: string): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    return Number(localStorage.getItem(`${key}.__ts`) || 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** 데이터셋 키 */
+export const datasetKeys = [
+  "kpi_daily",
+  "ledger",
+  "creative_results",
+  "rebalance_log",
+  "commerce_items",
+  "subs",
+  "returns",
+  "settings",
+] as const;
+export type DatasetKey = (typeof datasetKeys)[number];
+
+/** 필수 헤더(필요한 것만 최소) */
 export const requiredHeaders: Record<DatasetKey, string[]> = {
-  kpi_daily: ['date', 'channel', 'visits', 'clicks', 'carts', 'orders', 'revenue', 'ad_cost', 'returns', 'reviews'],
-  ledger: ['date', 'mission', 'type', 'stable', 'edge', 'note', 'lock_until'],
-  creative_results: ['date', 'asset', 'channel', 'clicks', 'spend', 'orders', 'revenue'],
-  rebalance_log: ['date', 'from', 'to', 'amount', 'note'],
-  commerce_items: ['date', 'sku', 'source', 'views', 'adds', 'orders', 'revenue'],
-  subs: ['date', 'signups', 'churn'],
-  returns: ['date', 'orders', 'return_qty'],
-  settings: ['key', 'value'],
+  kpi_daily: [
+    "date",
+    "channel",
+    "visits",
+    "clicks",
+    "carts",
+    "orders",
+    "revenue",
+    "ad_cost",
+    "returns",
+    "reviews",
+  ],
+  ledger: ["date", "mission", "type", "stable", "edge", "note", "lock_until"],
+  creative_results: [],
+  rebalance_log: [],
+  commerce_items: [],
+  subs: [],
+  returns: [],
+  settings: ["last_month_profit"],
 };
 
-export type HeaderValidation = { ok: boolean; missing: string[]; extra: string[] };
-export function validateHeaders(csv: string, key: DatasetKey): HeaderValidation {
+/** 헤더 검증: 누락된 헤더 목록 반환 */
+export function validateHeaders(csv: string, key: DatasetKey): string[] {
   const need = requiredHeaders[key] || [];
-  const { headers } = parseCsv(csv);
-  const missing = need.filter((h) => !headers.includes(h));
-  const extra = headers.filter((h) => !need.includes(h));
-  return { ok: missing.length === 0, missing, extra };
+  if (!need.length) return [];
+  const { headers } = parseCsv(csv || "");
+  const have = new Set(headers.map((h) => h.trim()));
+  return need.filter((h) => !have.has(h));
+}
+
+/** 테이블 → CSV 문자열 */
+export function toCsv(table: CsvTable): string {
+  const { headers, rows } = table;
+  const head = headers.join(",");
+  const body = rows
+    .map((r) => headers.map((h) => (r[h] ?? "") as string).join(","))
+    .join("\n");
+  return head + (body ? "\n" + body : "");
 }
