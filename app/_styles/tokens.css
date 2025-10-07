@@ -79,3 +79,45 @@ body{ background:var(--bg); color:var(--text); }
   }
 }
 
+/* === v3.4.1 Contrast Hotfix ===================================== */
+:root {
+  /* 라이트 */
+  --bg: #0c0f13;                 /* 배경 톤 살짝 올림 */
+  --bg-elev: #12171d;            /* 카드 배경 */
+  --fg: #e9eef5;                 /* 본문 텍스트 (기존보다 +20~30% 밝게) */
+  --fg-muted: #b9c3cf;           /* 보조 텍스트 */
+  --accent: #4fe3c1;
+
+  --panel: var(--bg-elev);
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+
+  /* 구성요소 대비 */
+  --tile-bg: rgba(255,255,255,0.06);
+  --tile-border: rgba(255,255,255,0.14);
+  --table-row: rgba(255,255,255,0.04);
+  --table-border: rgba(255,255,255,0.16);
+
+  /* 상태 */
+  --success: #2ecc71;
+  --warn: #f4bf4f;
+  --danger: #ff6b6b;
+
+  /* 로딩 시 투명도 */
+  --loading: .5;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f9fc;
+    --bg-elev: #ffffff;
+    --fg: #0f1115;
+    --fg-muted: #5b616a;
+    --panel: var(--bg-elev);
+
+    --tile-bg: rgba(0,0,0,0.04);
+    --tile-border: rgba(0,0,0,0.08);
+    --table-row: rgba(0,0,0,0.03);
+    --table-border: rgba(0,0,0,0.1);
+  }
+}
