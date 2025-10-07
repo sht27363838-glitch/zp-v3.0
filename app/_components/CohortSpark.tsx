@@ -1,34 +1,19 @@
 'use client'
 import React from 'react'
 
-type Props = {
-  /** 기본 권장 prop */
-  series?: number[]
-  /** 실수 방지용 별칭(하위 호환) */
-  values?: number[]
-}
-
-export default function CohortSpark({ series, values }: Props){
-  const data = (series ?? values ?? []).map((v, i) => ({ x: i, y: Number(v) || 0 }))
-
-  if (!data.length) return <div className="muted" style={{fontSize:12}}>데이터 없음</div>
-
-  // 아주 가벼운 스파크라인 (SVG)
-  const width = 220, height = 42, pad = 4
-  const max = Math.max(...data.map(d => d.y), 1)
-  const step = (width - pad*2) / Math.max(data.length - 1, 1)
-  const points = data
-    .map((d, i) => {
-      const x = pad + i * step
-      const y = height - pad - (d.y / max) * (height - pad*2)
-      return `${x},${y}`
-    })
-    .join(' ')
-
+type Props = { values?: number[]; series?: number[]; height?: number }
+export default function CohortSpark({ values, series, height = 56 }: Props) {
+  const v = values ?? series ?? []
+  if (!v.length) return <div style={{ height }} />
+  const max = Math.max(...v, 1e-9)
+  const min = Math.min(...v, 0)
+  const width = Math.max(80, v.length * 10)
+  const xs = v.map((_, i) => (i / Math.max(1, v.length - 1)) * (width - 2))
+  const ys = v.map(n => height - 2 - ((n - min) / (max - min || 1)) * (height - 4))
+  const d = xs.map((x, i) => `${i ? 'L' : 'M'}${x + 1},${ys[i] + 1}`).join(' ')
   return (
-    <svg width={width} height={height} style={{display:'block', opacity:'var(--dim-1)'}}>
-      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2" />
+    <svg width={width} height={height} aria-hidden>
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" />
     </svg>
   )
 }
-
