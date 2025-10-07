@@ -1,101 +1,96 @@
 // app/_lib/readCsv.ts
-'use client'
-
-/** ===== Types ===== */
-export type CsvRow = Record<string, any>
-export type CsvTable = { headers: string[]; rows: CsvRow[] }
+// 로컬스토리지 기반 CSV 관리 + 파서/직렬화 유틸
+export type CsvRow = Record<string, string | number | null>;
+export type CsvTable = { headers: string[]; rows: CsvRow[] };
 
 export type DatasetKey =
   | 'kpi_daily'
-  | 'creative_results'
   | 'ledger'
+  | 'creative_results'
   | 'rebalance_log'
   | 'commerce_items'
   | 'subs'
   | 'returns'
-  | 'settings'
+  | 'settings';
 
-/** 필수 헤더(검증용 — 없는 키는 자유 형식) */
-export const requiredHeaders: Partial<Record<DatasetKey, string[]>> = {
-  kpi_daily: ['date', 'channel', 'visits', 'clicks', 'carts', 'orders', 'revenue', 'ad_cost', 'returns', 'reviews'],
-  creative_results: ['date', 'creative_id', 'impressions', 'clicks', 'spend', 'orders', 'revenue'],
-  ledger: ['date', 'mission', 'type', 'stable', 'edge', 'note', 'lock_until', 'proof_url'],
-  settings: ['last_month_profit', 'cap_ratio'],
-}
-
-/** 프로젝트에서 쓰는 DS 키 목록 */
 export const datasetKeys: DatasetKey[] = [
   'kpi_daily',
-  'creative_results',
   'ledger',
+  'creative_results',
   'rebalance_log',
   'commerce_items',
   'subs',
   'returns',
   'settings',
-]
+];
 
-/** ===== CSV utils ===== */
+const LS_PREFIX = 'zp3.csv.';
 
-/** 매우 단순한 CSV 파서 — 따옴표 없는 정상 데이터 전제 */
-export function parseCsv(text: string): CsvTable {
-  const lines = (text || '').trim().split(/\r?\n/).filter(Boolean)
-  if (!lines.length) return { headers: [], rows: [] }
-  const headers = lines[0].split(',').map(h => h.trim())
-  const rows: CsvRow[] = []
-  for (let i = 1; i < lines.length; i++) {
-    const cells = lines[i].split(',')
-    const row: CsvRow = {}
-    headers.forEach((h, idx) => (row[h] = (cells[idx] ?? '').trim()))
-    rows.push(row)
-  }
-  return { headers, rows }
+const hasWindow = () => typeof window !== 'undefined';
+
+// 로컬스토리지 I/O
+export const readCsvLS = (key: DatasetKey): string | '' => {
+  if (!hasWindow()) return '';
+  return localStorage.getItem(LS_PREFIX + key) || '';
+};
+
+export const writeCsvLS = (key: DatasetKey, csv: string) => {
+  if (!hasWindow()) return;
+  localStorage.setItem(LS_PREFIX + key, csv || '');
+  localStorage.setItem(LS_PREFIX + key + '.ts', String(Date.now()));
+};
+
+export const clearCsvLS = (key: DatasetKey) => {
+  if (!hasWindow()) return;
+  localStorage.removeItem(LS_PREFIX + key);
+  localStorage.removeItem(LS_PREFIX + key + '.ts');
+};
+
+export const lastSavedAt = (key: DatasetKey): number => {
+  if (!hasWindow()) return 0;
+  return Number(localStorage.getItem(LS_PREFIX + key + '.ts') || 0);
+};
+
+// CSV <-> Table
+export function parseCsv(csv: string): CsvTable {
+  const lines = (csv || '').trim().split(/\r?\n/).filter(Boolean);
+  if (lines.length === 0) return { headers: [], rows: [] };
+  const headers = lines[0].split(',').map((s) => s.trim());
+  const rows = lines.slice(1).map((line) => {
+    const cols = line.split(',');
+    const obj: CsvRow = {};
+    headers.forEach((h, i) => (obj[h] = cols[i] ?? ''));
+    return obj;
+  });
+  return { headers, rows };
 }
 
-/** 간단 CSV 생성기 */
-export function toCsv(headers: string[], rows: CsvRow[]): string {
-  const head = headers.join(',')
+export function toCsv(table: CsvTable): string {
+  const { headers, rows } = table;
+  const head = headers.join(',');
   const body = rows
-    .map(r => headers.map(h => (r[h] ?? '')).join(','))
-    .join('\n')
-  return [head, body].filter(Boolean).join('\n')
+    .map((r) => headers.map((h) => (r[h] ?? '')).join(','))
+    .join('\n');
+  return [head, body].filter(Boolean).join('\n');
 }
 
-/** ===== localStorage layer ===== */
-const LS_PREFIX = 'csv:'
+// 스키마 검증 도우미 (업로드 위저드에서 사용)
+export const requiredHeaders: Record<DatasetKey, string[]> = {
+  kpi_daily: ['date', 'channel', 'visits', 'clicks', 'carts', 'orders', 'revenue', 'ad_cost', 'returns', 'reviews'],
+  ledger: ['date', 'mission', 'type', 'stable', 'edge', 'note', 'lock_until'],
+  creative_results: ['date', 'asset', 'channel', 'clicks', 'spend', 'orders', 'revenue'],
+  rebalance_log: ['date', 'from', 'to', 'amount', 'note'],
+  commerce_items: ['date', 'sku', 'source', 'views', 'adds', 'orders', 'revenue'],
+  subs: ['date', 'signups', 'churn'],
+  returns: ['date', 'orders', 'return_qty'],
+  settings: ['key', 'value'],
+};
 
-export function readCsvLS(key: DatasetKey | string): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(LS_PREFIX + key)
+export type HeaderValidation = { ok: boolean; missing: string[]; extra: string[] };
+export function validateHeaders(csv: string, key: DatasetKey): HeaderValidation {
+  const need = requiredHeaders[key] || [];
+  const { headers } = parseCsv(csv);
+  const missing = need.filter((h) => !headers.includes(h));
+  const extra = headers.filter((h) => !need.includes(h));
+  return { ok: missing.length === 0, missing, extra };
 }
-
-export function writeCsvLS(key: DatasetKey | string, text: string) {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(LS_PREFIX + key, text)
-  localStorage.setItem(`${LS_PREFIX}${key}:ts`, String(Date.now()))
-}
-
-export function clearCsvLS(key: DatasetKey | string) {
-  if (typeof window === 'undefined') return
-  localStorage.removeItem(LS_PREFIX + key)
-  localStorage.removeItem(`${LS_PREFIX}${key}:ts`)
-}
-
-export function lastSavedAt(key: DatasetKey | string): number {
-  if (typeof window === 'undefined') return 0
-  const v = localStorage.getItem(`${LS_PREFIX}${key}:ts`)
-  return v ? Number(v) : 0
-}
-
-/** 헤더 검증 */
-export function validateHeaders(text: string, key: DatasetKey) {
-  const need = requiredHeaders[key]
-  if (!need || !need.length) return { ok: true, missing: [] as string[] }
-  const { headers } = parseCsv(text || '')
-  const missing = need.filter(h => !headers.includes(h))
-  return { ok: missing.length === 0, missing }
-}
-
-/** 과거 코드 호환용 별칭(export) */
-export const readCsvFromLocal = readCsvLS
-export const readCsv = readCsvLS
