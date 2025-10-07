@@ -60,46 +60,40 @@ export default function Growth() {
     <div className="page">
       <h1>채널 리그(ROAS/CPA/CTR)</h1>
 
-      <div style={{ maxHeight: 480, overflow: 'auto' }}>
-        <table className="league">
-          <thead>
-            <tr>
-              <th>채널</th>
-              <th>방문</th>
-              <th>클릭</th>
-              <th>주문</th>
-              <th>매출</th>
-              <th>광고비</th>
-              <th>ROAS</th>
-              <th>CPA</th>
-              <th>CTR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.channel}>
-                <td>{r.channel}</td>
-                <td>{fmt(r.visits)}</td>
-                <td>{fmt(r.clicks)}</td>
-                <td>{fmt(r.orders)}</td>
-                <td>{fmt(r.revenue)}</td>
-                <td>{fmt(r.spend)}</td>
-                <td>{pct1(r.ROAS)}</td>
-                <td>{fmt(r.CPA)}</td>
-                <td>{pct1(r.CTR)}</td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
+           {/* 스켈레톤 or 표(스크롤 래퍼) */}
+      {rows.length === 0 ? (
+        <div className="skeleton" style={{height:160}} />
+      ) : (
+        <div className="scroll">
+          <table className="table league">
+            <thead>
               <tr>
-                <td colSpan={9} style={{ opacity: 0.7 }}>
-                  업로드된 <code>kpi_daily.csv</code>가 없습니다. Tools에서 데모 업로드 후 다시
-                  보십시오.
-                </td>
+                <th>채널</th>
+                <th>방문</th>
+                <th>클릭</th>
+                <th>주문</th>
+                <th>매출</th>
+                <th>광고비</th>
+                <th>ROAS</th>
+                <th>CPA</th>
+                <th>CTR</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.channel}>
+                  <td>{r.channel}</td>
+                  <td>{fmt(r.visits)}</td>
+                  <td>{fmt(r.clicks)}</td>
+                  <td>{fmt(r.orders)}</td>
+                  <td>{fmt(r.revenue)}</td>
+                  <td>{fmt(r.spend)}</td>
+                  <td>{pct(r.ROAS,1)}</td>
+                  <td>{fmt(r.CPA)}</td>
+                  <td>{pct(r.CTR,1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
