@@ -1,62 +1,41 @@
-/* app/_styles/tokens.css */
-/* Design Tokens (v3.4) */
 :root{
-  /* 색 */
   --bg: #0b0c10;
-  --panel: #11131a;
-  --panel-2: #151826;
-  --text: #e7ebf3;
-  --muted: #9aa3b2;
+  --panel: #121318;
+  --text: #e6e8eb;
+  --muted: #9aa3ad;
+  --primary: #7aa2ff;
+  --primary-ink: #0b1020;
+  --accent: #4fe3c1;
+  --warn: #ffb020;
+  --danger: #ff5d5d;
+  --ring: 0 0 0 3px rgba(122,162,255,.35);
 
-  --primary: #7c89ff;
-  --primary-600:#6772ff;
-  --primary-700:#4f58f7;
-
-  --success:#1ec995;
-  --warn:#f5c04e;
-  --danger:#ff6b6b;
-
-  /* 선/그림자 */
-  --line:#222637;
-  --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-
-  /* 반경/간격 */
-  --radius: 14px;
-  --radius-lg: 20px;
-  --gap-1: 6px;
-  --gap: 10px;
-  --gap-2: 16px;
-  --gap-3: 24px;
-
-  /* 폰트/크기 */
-  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
-  --fs-12: 12px;
-  --fs-13: 13px;
-  --fs-14: 14px;
-  --fs-16: 16px;
-  --fs-18: 18px;
-  --fs-24: 24px;
-
-  /* 버튼 밀도/높이 */
-  --btn-h: 38px;
-  --btn-pad: 0 14px;
-
-  /* 테이블 */
-  --row-h: 40px;
-  --table-pad: 10px 12px;
-
-  /* 상태 */
-  --focus: 0 0 0 3px rgba(124,137,255,.35);
-  --loading: 0.5;
+  --radius: 16px;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+  --gap: 12px;
+  --pad: 12px;
+  --loading: .55;
 }
 
-/* 자동 다크(이미 다크 톤이지만, 명암 미세 조정) */
+/* 시스템 라이트 모드 자동 대응 */
 @media (prefers-color-scheme: light){
   :root{
-    --bg: #0e1016;
-    --panel: #11131a;
-    --panel-2: #161927;
-    --text: #f0f3fa;
-    --line:#22283a;
+    --bg: #f8f9fb;
+    --panel: #ffffff;
+    --text: #111318;
+    --muted: #6b7280;
+    --primary: #345bff;
+    --primary-ink: #eef1ff;
+    --accent: #2cc4aa;
+    --warn: #a66b00;
+    --danger: #d92d2d;
+    --shadow: 0 8px 24px rgba(0,0,0,.08);
   }
+}
+
+/* 밀도 옵션 (원하실 때 body에 data-density="compact" 추가) */
+:root[data-density="compact"]{
+  --radius: 12px;
+  --gap: 8px;
+  --pad: 8px;
 }
