@@ -1,35 +1,25 @@
 // app/_lib/num.ts
+export const num = (v: any): number => {
+  if (v == null) return 0;
+  const n = typeof v === 'number' ? v : Number(String(v).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : 0;
+};
 
-/** 숫자 변환: NaN/Infinity 방지 */
-export function num(v: any): number {
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
+// 금액 포맷: 1,234,567
+export const fmt = (v: number): string =>
+  (isFinite(v) ? Math.round(v) : 0).toLocaleString();
 
-/** 통화/숫자 포맷 (간단 버전) */
-export function fmt(n: number, locale = 'ko-KR'): string {
-  return Number(num(n)).toLocaleString(locale)
-}
+// 퍼센트 포맷: 기본 소수 1자리. pct(0.123) -> "12.3%"
+export const pct = (ratio: number, digits = 1): string => {
+  const n = Number.isFinite(ratio) ? ratio : 0;
+  return (n * 100).toFixed(digits) + '%';
+};
 
-/** 퍼센트 표기: 두 번째 인자는 옵션(기본 1자리) */
-export function pct(x: number, digits: number = 1): string {
-  const v = num(x) * 100
-  return v.toFixed(digits) + '%'
-}
-
-/** 퍼센트 1자리 헬퍼 */
-export function pct1(x: number): string {
-  return pct(x, 1)
-}
-
-/** k/M/B 축약 표기 */
-export function kfmt(n: number, digits: number = 1): string {
-  const v = num(n)
-  const a = Math.abs(v)
-  if (a >= 1e9) return (v / 1e9).toFixed(digits) + 'B'
-  if (a >= 1e6) return (v / 1e6).toFixed(digits) + 'M'
-  if (a >= 1e3) return (v / 1e3).toFixed(digits) + 'k'
-  return v.toFixed(digits)
-}
-
-export type { } // TS 모듈로 인식시키기용 (빈 export)
+// 천단위 약식 (예: 1234000 -> "1.23M")
+export const kfmt = (v: number, digits = 2): string => {
+  const n = num(v);
+  if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(digits) + 'B';
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(digits) + 'M';
+  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(digits) + 'K';
+  return n.toString();
+};
