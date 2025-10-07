@@ -52,9 +52,9 @@ export default function Home(){
       <Modal open={open} onClose={()=>setOpen(false)} title={`드릴다운: ${topic.toUpperCase()}`}>
         <div className="tabs small">
           <span className="badge">최근 7일</span>
-          <Spark values={mapMetric(topic,last7)} width={520} height={100}/>
+          <Spark series={mapMetric(topic,last7)} width={520} height={100}/>
           <span className="badge">최근 30일</span>
-          <Spark values={mapMetric(topic,last30)} width={520} height={100}/>
+         <Spark series={mapMetric(topic,last30)} width={520} height={100}/>
         </div>
       </Modal>
 
