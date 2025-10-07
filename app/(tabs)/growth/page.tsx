@@ -56,12 +56,11 @@ export default function Growth() {
     <div className="page">
       <h1>채널 리그(ROAS/CPA/CTR)</h1>
 
-      {/* 스켈레톤 or 표(스크롤 래퍼) */}
       {rows.length === 0 ? (
-        <div className="skeleton" style={{ height: 160 }} />
-      ) : (
-        <div className="scroll">
-          <table className="table league">
+  <div className="skeleton" />
+) : (
+  <div className="scroll">
+    <table className="table">
             <thead>
               <tr>
                 <th>채널</th>
