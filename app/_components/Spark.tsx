@@ -1,21 +1,44 @@
 'use client'
-import React from 'react';
+import React from 'react'
 
-export default function Spark({values=[], width=320, height=80}:{values:number[]; width?:number; height?:number}){
-  if (!values || values.length===0) return <div style={{height}}/>;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const pad = 4;
-  const w = width - pad*2;
-  const h = height - pad*2;
-  const pts = values.map((v,i)=>{
-    const x = (i/(values.length-1))*w + pad;
-    const y = h - (max===min? 0 : (v-min)/(max-min))*h + pad;
-    return `${x},${y}`;
-  }).join(' ');
-  return (
-    <svg width={width} height={height}>
-      <polyline fill="none" stroke="var(--accent)" strokeWidth="2" points={pts}/>
-    </svg>
-  );
+type Props = {
+  /** 권장 */
+  series?: number[]
+  /** 하위호환(예전 코드에서 사용) */
+  data?: number[]
+  width?: number
+  height?: number
+  strokeWidth?: number
 }
+
+const Spark: React.FC<Props> = ({
+  series, data,
+  width = 160, height = 40, strokeWidth = 2,
+}) => {
+  const values = (series ?? data ?? []).map(v => Number(v) || 0)
+  const max = Math.max(1, ...values)
+  const min = Math.min(0, ...values)
+  const span = (max - min) || 1
+  const step = values.length > 1 ? (width - 4) / (values.length - 1) : (width - 4)
+
+  const pts = values.map((v, i) => {
+    const x = 2 + i * step
+    const y = height - 2 - ((v - min) / span) * (height - 4)
+    return `${x},${y}`
+  }).join(' ')
+
+  return (
+    <svg width={width} height={height} aria-label="sparkline">
+      <polyline
+        points={pts}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export default Spark
