@@ -1,25 +1,12 @@
 'use client'
-import React, {useMemo} from 'react'
-
-export default function LtvCurve({cohort}:{cohort:number[]}){
-  const cum = useMemo(()=>{
-    const a:number[] = []
-    let s = 0
-    for(const v of cohort){ s+= (v||0); a.push(s) }
-    return a
-  },[cohort])
-  if(!cum.length) return null
-  const w = 200, h = 60
+export default function LtvCurve({cum}:{cum:number[]}){
+  if(!cum?.length) return <div className="muted">데이터 없음</div>
   const max = Math.max(...cum, 1)
-  const pts = cum.map((v,i)=>{
-    const x = (i/(cum.length-1||1))*w
-    const y = h - (v/max)*h
-    return `${x},${y}`
-  }).join(' ')
+  const pts = cum.map((v,i)=>`${(i/(cum.length-1))*100},${100-(v/max)*100}`).join(' ')
   return (
-    <div className="card" style={{padding:'var(--pad)'}}>
-      <div className="muted" style={{fontSize:12, marginBottom:6}}>LTV(누적)</div>
-      <svg width={w} height={h}><polyline points={pts} fill="none" stroke="currentColor" strokeWidth={2}/></svg>
-    </div>
+    <svg viewBox="0 0 100 100" width="100%" height="80" preserveAspectRatio="none">
+      <polyline fill="none" stroke="currentColor" strokeWidth="2.2" points={pts}/>
+    </svg>
   )
 }
+
