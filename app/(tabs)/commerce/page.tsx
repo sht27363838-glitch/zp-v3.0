@@ -10,14 +10,14 @@ type Row = Record<string, any>
 export default function Commerce(){
   const raw = readCsvLS('kpi_daily')||''
   const tbl: CsvTable = useMemo(()=> raw? parseCsv(raw): {headers:[], rows:[]}, [raw])
-  const rows = tbl.rows as Row[]
+  const rows = (tbl.rows as Row[]) || []
 
-  // ===== AOV 워터폴 (단순 버전: 장바구니→주문 단계)
+  // ===== AOV 워터폴 (장바구니→주문→매출)
   const aovData = useMemo(()=>{
-    const carts = rows.reduce((s,r)=> s+num(r.carts), 0)
-    const orders = rows.reduce((s,r)=> s+num(r.orders), 0)
+    const carts   = rows.reduce((s,r)=> s+num(r.carts), 0)
+    const orders  = rows.reduce((s,r)=> s+num(r.orders), 0)
     const revenue = rows.reduce((s,r)=> s+num(r.revenue), 0)
-    const aov = orders? revenue/orders : 0
+    const aov     = orders? revenue/orders : 0
     return { carts, orders, revenue, aov }
   },[rows])
 
@@ -30,25 +30,30 @@ export default function Commerce(){
     const filtered = rows.filter(r=> (r.channel||'unknown')===ch && (r.product||r.sku||'generic')===prod)
     const clicks = filtered.reduce((s,r)=> s+num(r.clicks), 0)
     const orders = filtered.reduce((s,r)=> s+num(r.orders), 0)
-    return { clicks, orders, cr: clicks? orders/clicks : 0 }
+    return { clicks, orders, cr: clicks? orders/Math.max(1,clicks) : 0 }
   }
 
-  // ===== 코호트/LTV (데모: 최근 8주 값 가정 — 실제 데이터 붙으면 교체)
+  // ===== 코호트/LTV (데모: 최근 8주)
   const cohort = useMemo(()=> {
     const weeks = 8
-    const ordByW: number[] = Array.from({length:weeks},(_,i)=>{
+    return Array.from({length:weeks},(_,i)=>{
       const picked = rows.filter(r=> (num(r.week_index)||0)===i)
       return picked.reduce((s,r)=> s+num(r.orders),0)
     })
-    return ordByW
   },[rows])
+
+  // LTV용 누적 배열
+  const cum = useMemo(()=>{
+    let s = 0
+    return cohort.map(v => (s += Number(v)||0))
+  }, [cohort])
 
   // ====== UI
   return (
     <div className="page">
       <h1>C2 — 전환/커머스 레이더</h1>
 
-      {/* AOV 워터폴 */}
+      {/* AOV 워터폴 + 코호트/LTV */}
       <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)'}}>
         <div className="card">
           <div className="row" style={{justifyContent:'space-between', marginBottom:8}}>
@@ -58,8 +63,8 @@ export default function Commerce(){
           <div className="waterfall" style={{display:'flex', gap:12}}>
             {[
               {label:'장바구니', val:aovData.carts},
-              {label:'주문', val:aovData.orders},
-              {label:'매출', val:aovData.revenue},
+              {label:'주문',     val:aovData.orders},
+              {label:'매출',     val:aovData.revenue},
             ].map((s,i)=>(
               <div key={i} className="wf-seg" title={`${s.label}: ${fmt(s.val)}`} style={{
                 flex:1, background:'var(--panel)', borderRadius:'var(--radius)',
@@ -72,10 +77,14 @@ export default function Commerce(){
           </div>
         </div>
 
-        {/* 코호트/ltv */}
         <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)'}}>
-          <div className="card"><div className="muted" style={{fontSize:12, marginBottom:6}}>코호트(주간)</div><CohortSpark values={cohort}/><CohortSpark series={cohort}/></div>
-          <LtvCurve cohort={cohort}/>
+          <div className="card">
+            <div className="muted" style={{fontSize:12, marginBottom:6}}>코호트(주간)</div>
+            {/* ✅ CohortSpark는 series만 사용 */}
+            <CohortSpark series={cohort}/>
+          </div>
+          {/* ✅ LtvCurve는 누적값 cum을 요구 */}
+          <LtvCurve cum={cum}/>
         </div>
       </div>
 
@@ -98,37 +107,36 @@ export default function Commerce(){
               </tr>
             </thead>
             <tbody>
-              {prods.map(p=>{
-                return (
-                  <tr key={p}>
-                    <td><b>{p}</b></td>
-                    {xcats.map(ch=>{
-                      const v = cellValue(p, ch)
-                      const heat = Math.min(1, v.cr*3) // 간단 가중
-                      return (
-                        <td key={ch}>
-                          <button
-                            className="cell"
-                            onClick={()=> setFocus({prod:p, ch})}
-                            title={`CR ${pct(v.cr)} (orders ${fmt(v.orders)}, clicks ${fmt(v.clicks)})`}
-                            style={{
-                              width:'100%', padding:'8px',
-                              background:`rgba(79,227,193,${0.08+0.35*heat})`,
-                              borderRadius:8
-                            }}
-                          >
-                            {pct(v.cr)}
-                          </button>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                )
-              })}
+              {prods.map(p=>(
+                <tr key={p}>
+                  <td><b>{p}</b></td>
+                  {xcats.map(ch=>{
+                    const v = cellValue(p, ch)
+                    const heat = Math.min(1, v.cr*3)
+                    return (
+                      <td key={ch}>
+                        <button
+                          className="cell"
+                          onClick={()=> setFocus({prod:p, ch})}
+                          title={`CR ${pct(v.cr)} (orders ${fmt(v.orders)}, clicks ${fmt(v.clicks)})`}
+                          style={{
+                            width:'100%', padding:'8px',
+                            background:`rgba(79,227,193,${0.08+0.35*heat})`,
+                            borderRadius:8
+                          }}
+                        >
+                          {pct(v.cr)}
+                        </button>
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-        {/* 드릴다운 모달(간단형) */}
+
+        {/* 드릴다운 모달 */}
         {focus && (
           <div className="modal" onClick={()=>setFocus(null)}>
             <div className="modal-body" onClick={e=>e.stopPropagation()}>
@@ -137,7 +145,7 @@ export default function Commerce(){
                 <button className="btn" onClick={()=>setFocus(null)}>닫기</button>
               </div>
               <div className="muted" style={{marginTop:6}}>최근 추이</div>
-              <CohortSpark values={
+              <CohortSpark series={
                 rows
                   .filter(r=> (r.channel||'unknown')===focus.ch && (r.product||r.sku||'generic')===focus.prod)
                   .slice(-20)
