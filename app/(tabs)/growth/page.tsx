@@ -1,7 +1,7 @@
+// app/(tabs)/growth/page.tsx
 'use client'
-
 import React, { useMemo } from 'react'
-import { readCsvLS, parseCsv, type CsvRow } from '../../_lib/readCsv'
+import { readCsvLS, parseCsv, type CsvRow, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
 
 type Agg = {
@@ -14,18 +14,17 @@ type Agg = {
 }
 
 export default function Growth() {
-  // 로컬스토리지에서 kpi_daily CSV 원문 읽기
   const raw = readCsvLS('kpi_daily') || ''
 
   // 한 번만 파싱 (SSR 안전)
-  const data = useMemo(
-    () => (raw ? parseCsv(raw) : { headers: [] as string[], rows: [] as CsvRow[] }),
+  const data: CsvTable = useMemo(
+    () => (raw ? parseCsv(raw) : { headers: [], rows: [] }),
     [raw]
   )
 
   // 채널별 집계
   const by: Record<string, Agg> = {}
-  for (const r of data.rows) {
+  for (const r of data.rows as CsvRow[]) {
     const ch = (r.channel as string) || 'unknown'
     const o =
       (by[ch] ||= {
@@ -43,7 +42,7 @@ export default function Growth() {
     o.revenue += num(r.revenue)
   }
 
-  // 표용 최종 리스트 (지표 계산)
+  // 표용 리스트 (지표 계산)
   const rows = Object.values(by)
     .map((o) => {
       const ROAS = o.spend ? o.revenue / o.spend : 0
@@ -53,16 +52,13 @@ export default function Growth() {
     })
     .sort((a, b) => b.ROAS - a.ROAS)
 
-  // 퍼센트 표기(소수 1자리) 헬퍼
-  const pct1 = (v: number) => pct(v, 1)
-
   return (
     <div className="page">
       <h1>채널 리그(ROAS/CPA/CTR)</h1>
 
-           {/* 스켈레톤 or 표(스크롤 래퍼) */}
+      {/* 스켈레톤 or 표(스크롤 래퍼) */}
       {rows.length === 0 ? (
-        <div className="skeleton" style={{height:160}} />
+        <div className="skeleton" style={{ height: 160 }} />
       ) : (
         <div className="scroll">
           <table className="table league">
@@ -88,12 +84,15 @@ export default function Growth() {
                   <td>{fmt(r.orders)}</td>
                   <td>{fmt(r.revenue)}</td>
                   <td>{fmt(r.spend)}</td>
-                  <td>{pct(r.ROAS,1)}</td>
+                  <td>{pct(r.ROAS, 1)}</td>
                   <td>{fmt(r.CPA)}</td>
-                  <td>{pct(r.CTR,1)}</td>
+                  <td>{pct(r.CTR, 1)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+    </div>
+  )
+}
