@@ -1,18 +1,11 @@
 'use client'
-import React from 'react'
-
-export default function CohortSpark({values}:{values:number[]}){
-  if(!values?.length) return null
-  const w = 160, h = 40
-  const max = Math.max(...values, 1)
-  const pts = values.map((v,i)=>{
-    const x = (i/(values.length-1||1))*w
-    const y = h - (v/max)*h
-    return `${x},${y}`
-  }).join(' ')
+export default function CohortSpark({series}:{series:number[]}){
+  if(!series?.length) return <div className="muted">데이터 없음</div>
+  const max = Math.max(...series, 1)
+  const pts = series.map((v,i)=>`${(i/(series.length-1))*100},${100-(v/max)*100}`).join(' ')
   return (
-    <svg width={w} height={h} style={{display:'block'}}>
-      <polyline points={pts} fill="none" stroke="currentColor" strokeOpacity={0.8} strokeWidth={2}/>
+    <svg viewBox="0 0 100 100" width="100%" height="64" preserveAspectRatio="none">
+      <polyline fill="none" stroke="currentColor" strokeWidth="2" points={pts}/>
     </svg>
   )
 }
