@@ -1,40 +1,48 @@
 // app/_lib/ledger.ts
-'use client'
-
-import { parseCsv, toCsv, readCsvLS, writeCsvLS } from './readCsv'
+import { CsvTable, parseCsv, toCsv, readCsvLS, writeCsvLS } from './readCsv';
+import { num } from './num';
 
 export type LedgerRow = {
-  date: string
-  mission: string
-  type: 'daily' | 'weekly' | 'monthly'
-  stable: number
-  edge: number
-  note?: string
-  lock_until?: string
-  proof_url?: string
-}
+  date: string;             // YYYY-MM-DD
+  mission: string;          // e.g., "Daily Loop"
+  type: string;             // daily/weekly/monthly/…
+  stable: number;
+  edge: number;
+  note: string;             // 'EDGE LOCK' / 'PAYOUT CUT' 등
+  lock_until: string;       // '' or YYYY-MM-DD
+};
 
-const LEDGER_KEY = 'ledger'
+const KEY: 'ledger' = 'ledger';
+
+export function readLedger(): CsvTable {
+  const raw = readCsvLS(KEY) || '';
+  if (!raw) return { headers: ['date','mission','type','stable','edge','note','lock_until'], rows: [] };
+  return parseCsv(raw);
+}
 
 export function appendLedger(row: LedgerRow) {
-  const raw = readCsvLS(LEDGER_KEY) || ''
-  const have = raw ? parseCsv(raw) : { headers: [], rows: [] }
-  // 헤더 표준화
-  const headers = have.headers.length
-    ? have.headers
-    : ['date', 'mission', 'type', 'stable', 'edge', 'note', 'lock_until', 'proof_url']
-  const newRows = [...have.rows, row]
-  const csv = toCsv(headers, newRows)
-  writeCsvLS(LEDGER_KEY, csv)
+  const table = readLedger();
+  // 헤더 보정
+  if (table.headers.length === 0)
+    table.headers = ['date','mission','type','stable','edge','note','lock_until'];
+  table.rows.push({
+    date: row.date,
+    mission: row.mission,
+    type: row.type,
+    stable: num(row.stable),
+    edge: num(row.edge),
+    note: row.note || '',
+    lock_until: row.lock_until || '',
+  });
+  writeCsvLS(KEY, toCsv(table));
 }
 
-export function lastTimeKey(key: string): number {
-  if (typeof window === 'undefined') return 0
-  const v = localStorage.getItem(`cooldown:${key}`)
-  return v ? Number(v) : 0
-}
-
-export function markTime(key: string) {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(`cooldown:${key}`, String(Date.now()))
-}
+const TS_PREFIX = 'zp3.cooldown.';
+export const lastTimeKey = (k: string): number => {
+  if (typeof window === 'undefined') return 0;
+  return Number(localStorage.getItem(TS_PREFIX + k) || 0);
+};
+export const markTime = (k: string) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(TS_PREFIX + k, String(Date.now()));
+};
