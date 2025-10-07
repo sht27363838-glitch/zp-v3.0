@@ -1,4 +1,5 @@
 // /app/layout.tsx  (server component)
+import './_styles/contrast.css'
 import './_styles/tokens.css'
 import './_styles/base.css'
 import './globals.css';
