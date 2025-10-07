@@ -29,10 +29,13 @@ const LS_PREFIX = 'zp3.csv.';
 const hasWindow = () => typeof window !== 'undefined';
 
 // 로컬스토리지 I/O
-export const readCsvLS = (key: DatasetKey): string | '' => {
-  if (!hasWindow()) return '';
-  return localStorage.getItem(LS_PREFIX + key) || '';
-};
+export function readCsvLS(key: string): string {
+  if (typeof window === 'undefined') return '';          // SSR 안전
+  try { return localStorage.getItem(key) || ''; } catch { return ''; }
+  export function pct1(v:number, digits=1){ return `${(v*100).toFixed(digits)}%`;
+
+}
+
 
 export const writeCsvLS = (key: DatasetKey, csv: string) => {
   if (!hasWindow()) return;
