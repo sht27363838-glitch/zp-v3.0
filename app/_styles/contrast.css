@@ -1,0 +1,45 @@
+/* ===== High-contrast hotfix (글자 흐림/저대비 해결) ===== */
+:root{
+  --bg: #0a0e13;
+  --panel: #111823;
+  --panel-2: #0d131c;
+  --text: #ecf3fb;           /* 더 밝게 */
+  --muted: #b6c3d3;          /* 읽히는 회색 */
+  --primary: #4fe3c1;
+  --danger: #ff6b6b;
+  --warn: #f0c36a;
+  --ring: rgba(79,227,193,.45);
+  --radius: 14px;
+  --shadow: 0 6px 22px rgba(0,0,0,.45);
+  --tile-bg: rgba(255,255,255,.04);   /* KPI 타일 배경 */
+  --tile-head: rgba(255,255,255,.07); /* 타일 상단줄 */
+}
+
+/* 기본 텍스트 대비 강화 */
+html, body, .page { color: var(--text) !important; background: var(--bg); }
+h1,h2,h3 { color: var(--text) !important; }
+
+/* KPI 타일(값이 흐리게 보이는 증상 방지) */
+.kpi-grid .tile,
+.card.kpi, .kpi-tile, .KpiTile {
+  background: var(--tile-bg) !important;
+  color: var(--text) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.kpi-grid .tile .label,
+.kpi-tile .label { color: var(--muted) !important; }
+.kpi-grid .tile .value,
+.kpi-tile .value, .kpi .value { color: var(--text) !important; font-weight: 700; }
+
+/* 표/배지/버튼 텍스트도 또렷하게 */
+.table, table.table { color: var(--text) !important; background: var(--panel) !important; }
+.table thead th{ background: var(--tile-head); color: #d8e9ff !important; }
+.badge { background: var(--panel-2); color: var(--text); }
+.btn{ background:#1c2430; color:var(--text); }
+.btn.primary{ background:var(--primary); color:#0b1014; font-weight:700; }
+
+/* 스켈레톤 색상 */
+.skeleton{
+  background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.12), rgba(255,255,255,.05));
+}
