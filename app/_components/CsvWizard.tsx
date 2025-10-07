@@ -1,151 +1,129 @@
-// app/_components/CsvWizard.tsx
-'use client';
+'use client'
 
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react'
 import {
   datasetKeys, type DatasetKey,
-  readCsvLS, writeCsvLS, clearCsvLS, lastSavedAt,
-  validateHeaders, requiredHeaders, parseCsv
-} from '../_lib/readCsv';
+  readCsvLS, writeCsvLS, clearCsvLS,
+  lastSavedAt, validateHeaders, parseCsv
+} from '../_lib/readCsv'
 
-// 데모 템플릿(필수 키 모두 제공)
-const DEMO: Record<DatasetKey, string> = {
-  kpi_daily: `date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews
-2025-10-01,meta,1000,80,30,10,300000,120000,0,5
-2025-10-02,meta,900,70,25,8,240000,100000,1,4`,
-  ledger: `date,mission,type,stable,edge,note,lock_until
-2025-10-01,Daily Loop,daily,20000,0,,`,
-  creative_results: `date,creative_id,impressions,clicks,spend,orders,revenue
-2025-10-01,CR001,20000,200,120000,8,240000`,
-  rebalance_log: `date,from_to,amount,reason
-2025-10-05,edge->stable,50000,edge over 30%`,
-  commerce_items: `order_id,sku,qty,price,discount,source
-O1001,S1,1,30000,0,meta`,
-  subs: `customer_id,start_date,billing_n,status
-C001,2025-09-01,2,active`,
-  returns: `order_id,sku,reason,date
-O1001,S1,defect,2025-10-02`,
-  settings: `last_month_profit,cap_ratio,edge_min,edge_max
-1000000,0.10,0.15,0.30`,
-};
-
-function tsLabel(ts:number){
-  if(!ts) return '—';
-  const d = new Date(ts);
-  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
-  const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
-  return `${y}-${m}-${dd} ${hh}:${mm}`;
+/** 간단 타임스탬프 라벨 */
+function tsLabel(ms: number) {
+  if (!ms) return '—'
+  const d = new Date(ms)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export default function CsvWizard(){
-  // 선택 데이터셋
-  const [ds, setDs] = useState<DatasetKey>('kpi_daily');
-  // 텍스트 영역 내용
-  const [text, setText] = useState<string>('');
+export default function CsvWizard() {
+  const [ds, setDs] = useState<DatasetKey>('kpi_daily')
+  const [text, setText] = useState<string>('')
+  const [msg, setMsg] = useState<string>('')
 
-  // 최초 로드: 로컬에 있으면 불러오기
-  useEffect(()=>{
-    const raw = readCsvLS(ds) || DEMO[ds];
-    setText(raw || '');
-  }, [ds]);
+  // 초기 로드
+  useEffect(() => {
+    const raw = readCsvLS(ds) || ''
+    setText(raw)
+    setMsg('')
+  }, [ds])
 
-  // 헤더 검증/저장시간
-  const vres = useMemo(()=> validateHeaders(text||'', ds), [text, ds]);
-  const last  = useMemo(()=> tsLabel(lastSavedAt(ds)), [ds, text]);
+  // 미리보기/검증
+  const preview = useMemo(() => parseCsv(text || ''), [text])
+  // ✅ validateHeaders는 누락 헤더 string[]을 반환
+  const missing = useMemo(() => validateHeaders(text || '', ds), [text, ds])
+  const isOk = missing.length === 0
+  const last = useMemo(() => tsLabel(lastSavedAt(ds)), [ds, text])
 
-  // 동작들
-  const onTemplate = ()=> setText(DEMO[ds] || '');
-  const onSave = ()=>{
-    writeCsvLS(ds, text||'');
-    alert('저장 완료');
-  };
-  const onClear = ()=>{
-    clearCsvLS(ds);
-    setText(DEMO[ds] || '');
-    alert('초기화 완료');
-  };
-  const onDownload = ()=>{
-    const blob = new Blob([text||''], {type:'text/csv'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${ds}.csv`;
-    a.click();
-  };
-  const onUpload = (f: File)=>{
-    const reader = new FileReader();
-    reader.onload = ()=>{
-      const t = String(reader.result||'');
-      setText(t);
-    };
-    reader.readAsText(f);
-  };
+  const onTemplate = () => {
+    // 아주 최소 템플릿 (필요시 확장)
+    if (ds === 'kpi_daily') {
+      setText(
+`date,channel,visits,clicks,carts,orders,revenue,ad_cost,returns,reviews
+2025-10-01,meta,1000,80,30,10,300000,120000,0,5
+2025-10-02,meta,950,75,28,9,270000,110000,0,4`
+      )
+    } else if (ds === 'ledger') {
+      setText(
+`date,mission,type,stable,edge,note,lock_until
+2025-10-01,Daily Loop,daily,10000,3000,,`
+      )
+    } else {
+      setText('')
+    }
+  }
+
+  const onSave = () => {
+    writeCsvLS(ds, text || '')
+    setMsg('✅ 저장 완료')
+    setTimeout(() => setMsg(''), 1500)
+  }
+
+  const onClear = () => {
+    clearCsvLS(ds)
+    setText('')
+    setMsg('🧹 삭제 완료')
+    setTimeout(() => setMsg(''), 1500)
+  }
 
   return (
-    <div className="tool-card">
-      <div className="row" style={{gap:12, alignItems:'center', marginBottom:8}}>
-        <label>데이터셋</label>
-        <select value={ds} onChange={e=>setDs(e.target.value as DatasetKey)}>
-          {datasetKeys.map(k=> <option key={k} value={k}>{k}</option>)}
-        </select>
-        <span className="badge">last: {last}</span>
-        {vres.ok ? <span className="badge success">헤더 OK</span>
-                 : <span className="badge danger">누락: {vres.missing.join(', ')||'—'}</span>}
+    <div className="card">
+      <div className="row" style={{justifyContent:'space-between', alignItems:'center', gap:12}}>
+        <div className="row" style={{gap:8, alignItems:'center'}}>
+          <b>CSV 위저드</b>
+          <select
+            value={ds}
+            onChange={e => setDs(e.target.value as DatasetKey)}
+            className="input"
+          >
+            {datasetKeys.map(k => <option key={k} value={k}>{k}</option>)}
+          </select>
+          <span className="badge">last: {last}</span>
+          {/* ✅ 객체가 아니라 배열 길이로 표시 */}
+          {isOk ? (
+            <span className="badge success">헤더 OK</span>
+          ) : (
+            <span className="badge danger">누락: {missing.join(', ') || '—'}</span>
+          )}
+        </div>
+        <div className="row" style={{gap:8}}>
+          <button className="btn" onClick={onTemplate}>템플릿</button>
+          <button className="btn danger" onClick={onClear}>삭제</button>
+          <button className="btn primary" onClick={onSave}>저장</button>
+        </div>
       </div>
 
-      <div style={{display:'flex', gap:12, flexWrap:'wrap', marginBottom:8}}>
-        <button className="btn" onClick={onTemplate}>템플릿</button>
-        <button className="btn primary" onClick={onSave}>저장</button>
-        <button className="btn warn" onClick={onClear}>초기화</button>
-        <button className="btn" onClick={onDownload}>다운로드</button>
-        <label className="btn">
-          업로드
-          <input type="file" accept=".csv,text/csv" style={{display:'none'}}
-                 onChange={e=> e.target.files?.[0] && onUpload(e.target.files[0])}/>
-        </label>
-      </div>
+      {msg && <div className="muted" style={{marginTop:6}}>{msg}</div>}
 
       <textarea
+        className="input"
+        style={{width:'100%', height:180, marginTop:12, fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace'}}
         value={text}
-        onChange={e=>setText(e.target.value)}
-        spellCheck={false}
-        style={{width:'100%', minHeight:260}}
-        placeholder={`CSV 붙여넣기 (${ds})`}
+        onChange={e => setText(e.target.value)}
+        placeholder="여기에 CSV 붙여넣기"
       />
 
-      {/* 미리보기(상위 5행) */}
-      <Preview csv={text}/>
-    </div>
-  );
-}
-
-function Preview({ csv }: { csv: string }) {
-  const table = useMemo(() => (csv ? parseCsv(csv) : { headers: [] as string[], rows: [] as any[] }), [csv]);
-  const rows = table.rows.slice(0, 5);
-  if (!rows.length) return null;
-
-  // headers가 비어 있으면 첫 행의 키를 사용
-  const headers = table.headers.length ? table.headers : Object.keys(rows[0]);
-
-  return (
-    <div className="preview">
-      <table className="w-full text-sm">
-        <thead>
-          <tr>
-            {headers.map(h => (
-              <th key={h} className="px-2 py-1 text-left opacity-70">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i}>
-              {headers.map(h => (
-                <td key={h} className="px-2 py-1 border-t border-white/10">{String((r as any)[h] ?? '')}</td>
+      <div className="muted" style={{marginTop:8, marginBottom:6}}>미리보기(상위 5행)</div>
+      {/* 긴 표 스크롤 */}
+      <div className="scroll">
+        {!preview.rows.length ? (
+          <div className="skeleton" style={{height:120}} />
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                {preview.headers.map(h => <th key={h}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {preview.rows.slice(0, 5).map((r, i) => (
+                <tr key={i}>
+                  {preview.headers.map(h => <td key={h}>{String((r as any)[h] ?? '')}</td>)}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
-  );
+  )
 }
