@@ -74,7 +74,7 @@ export default function Commerce(){
 
         {/* 코호트/ltv */}
         <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)'}}>
-          <div className="card"><div className="muted" style={{fontSize:12, marginBottom:6}}>코호트(주간)</div><CohortSpark values={cohort}/></div>
+          <div className="card"><div className="muted" style={{fontSize:12, marginBottom:6}}>코호트(주간)</div><CohortSpark values={cohort}/><CohortSpark series={cohort}/></div>
           <LtvCurve cohort={cohort}/>
         </div>
       </div>
