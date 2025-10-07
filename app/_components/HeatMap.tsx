@@ -30,7 +30,7 @@ export default function HeatMap({cells}:{cells:Cell[]}){
               <h3>{pick.product} × {pick.source}</h3>
               <button className="btn" onClick={close}>닫기</button>
             </div>
-            <Spark data={pick.series} height={64}/>
+            <Spark series={pick.series} height={64}/>
           </div>
         </div>
       )}
