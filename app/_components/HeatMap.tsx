@@ -1,7 +1,6 @@
 'use client'
 import React, { useMemo, useState } from 'react'
 import { fmt, pct } from '../_lib/num' 
-import React, {useState} from 'react'
 import Modal from './Modal'
 import Spark from './Spark'
 
