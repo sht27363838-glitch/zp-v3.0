@@ -4,6 +4,7 @@ import React, { useMemo } from 'react'
 import { readCsvLS, parseCsv, type CsvRow } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
 import KpiTile from '../../_components/KpiTile'
+import ScrollWrap from '../../_components/ScrollWrap'
 
 // 퍼센트 문자열을 보장하는 로컬 헬퍼(항상 string 반환)
 const pct1 = (v: number): string => `${(v * 100).toFixed(1)}%`
