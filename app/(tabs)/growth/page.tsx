@@ -1,9 +1,10 @@
 // app/(tabs)/growth/page.tsx
 'use client'
+
 import React, { useMemo } from 'react'
 import { readCsvLS, parseCsv, type CsvRow, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
-import ScrollWrap from '../../_components/ScrollWrap'   // ✅ 추가
+import ScrollWrap from '../../_components/ScrollWrap'
 
 type Agg = {
   channel: string
@@ -53,6 +54,9 @@ export default function Growth() {
     })
     .sort((a, b) => b.ROAS - a.ROAS)
 
+  // 퍼센트 문자열(소수 1자리)
+  const pct1 = (v: number) => pct(v, 1)
+
   return (
     <div className="page">
       <h1>채널 리그(ROAS/CPA/CTR)</h1>
@@ -60,7 +64,7 @@ export default function Growth() {
       {rows.length === 0 ? (
         <div className="skeleton" />
       ) : (
-        <ScrollWrap>  {/* ✅ 이 줄부터 */}
+        <ScrollWrap>
           <table className="table">
             <thead>
               <tr>
@@ -84,14 +88,14 @@ export default function Growth() {
                   <td>{fmt(r.orders)}</td>
                   <td>{fmt(r.revenue)}</td>
                   <td>{fmt(r.spend)}</td>
-                  <td>{pct(r.ROAS, 1)}</td>
+                  <td>{pct1(r.ROAS)}</td>
                   <td>{fmt(r.CPA)}</td>
-                  <td>{pct(r.CTR, 1)}</td>
+                  <td>{pct1(r.CTR)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </ScrollWrap>   {/* ✅ 여기까지 교체 */}
+        </ScrollWrap>
       )}
     </div>
   )
