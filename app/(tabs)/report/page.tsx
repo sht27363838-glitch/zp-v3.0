@@ -1,10 +1,11 @@
+// app/(tabs)/report/page.tsx
 'use client'
 
 import React, { useMemo } from 'react'
 import { readCsvLS, parseCsv, type CsvRow } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
 import KpiTile from '../../_components/KpiTile'
-import ScrollWrap from '../../_components/ScrollWrap'
+import ScrollWrap from '../../_components/ScrollWrap' // ✅ 추가
 
 // 퍼센트 문자열을 보장하는 로컬 헬퍼(항상 string 반환)
 const pct1 = (v: number): string => `${(v * 100).toFixed(1)}%`
@@ -57,6 +58,7 @@ export default function ReportPage() {
     <div className="page">
       <h1>지휘소(C0) — 요약</h1>
 
+      {/* ✅ 1) KPI 그리드 (기존 그대로) */}
       <div className="kpi-grid">
         <KpiTile label="매출" value={fmt(revenue)} />
         <KpiTile label="ROAS" value={pct1(ROAS)} />
@@ -66,6 +68,47 @@ export default function ReportPage() {
         <KpiTile label="전월 순익(기준)" value={fmt(lastMonthProfit)} />
       </div>
 
+      {/* ⬇️⬇️⬇️ ✅ 2) 여기가 ‘정확히’ 붙일 자리입니다 ⬇️⬇️⬇️ */}
+      {data.rows.length === 0 ? (
+        <div className="skeleton" />
+      ) : (
+        <div style={{ marginTop: 16 }}>
+          <h2 className="mb-2">최근 지표 표</h2>
+          <ScrollWrap>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>채널</th>
+                  <th>방문</th>
+                  <th>클릭</th>
+                  <th>주문</th>
+                  <th>매출</th>
+                  <th>광고비</th>
+                  <th>반품</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data.rows as CsvRow[]).slice(-20).reverse().map((r, i) => (
+                  <tr key={i}>
+                    <td>{String(r.date ?? '')}</td>
+                    <td>{String(r.channel ?? '')}</td>
+                    <td>{fmt(r.visits)}</td>
+                    <td>{fmt(r.clicks)}</td>
+                    <td>{fmt(r.orders)}</td>
+                    <td>{fmt(r.revenue)}</td>
+                    <td>{fmt(r.ad_cost)}</td>
+                    <td>{fmt(r.returns)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollWrap>
+        </div>
+      )}
+      {/* ⬆️⬆️⬆️ 여기까지 표 블록 ⬆️⬆️⬆️ */}
+
+      {/* ✅ 3) 기존 설명 문단 — 표 블록 ‘아래’에 그대로 유지 */}
       <div style={{ marginTop: 16, opacity: 0.8 }}>
         <p className="text-sm">
           데이터 원본: <code>kpi_daily.csv</code>, 기준 순익:{' '}
