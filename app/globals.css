@@ -138,3 +138,111 @@ input:focus, select:focus, textarea:focus{ outline: none; box-shadow: var(--focu
 /* 기존 클래스 보강(호환 유지) */
 .kpi .label, .kpi-label{ color: var(--muted); }
 .kpi .value, .kpi-value{ font-weight:700; }
+
+/* ===== v3.5 visibility & ui tokens (append) ===== */
+:root{
+  /* colors */
+  --bg: #0b0c0f;
+  --fg: #e7e9ee;
+  --fg-muted: #a8b0bd;
+  --panel: #141821;
+  --panel-2: #0f1218;
+  --border: #222838;
+
+  /* accents */
+  --pri: #4fe3c1;
+  --pri-weak: rgba(79,227,193,.12);
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --success: #22c55e;
+
+  /* layout */
+  --pad: 12px;
+  --gap: 12px;
+  --radius: 10px;
+  --shadow: 0 2px 10px rgba(0,0,0,.25);
+
+  /* effects */
+  --loading: .45;
+}
+
+/* Light mode 자동 대응 */
+@media (prefers-color-scheme: light){
+  :root{
+    --bg: #ffffff;
+    --fg: #0f1115;
+    --fg-muted: #606771;
+    --panel: #f3f5f9;
+    --panel-2: #eef1f6;
+    --border: #e2e8f0;
+    --pri-weak: rgba(37,141,118,.12);
+  }
+}
+
+html, body{
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif;
+}
+
+/* Cards / badges / btns / table 공통 스타일 — className 그대로 쓰면 예쁘게 나옵니다 */
+.page{ padding: 16px; }
+
+.card{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: calc(var(--pad) + 4px);
+  box-shadow: var(--shadow);
+}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 8px; border-radius: 999px;
+  background: var(--panel-2); color: var(--fg-muted);
+  border:1px solid var(--border); font-size:12px;
+}
+.badge.success{ color:#0a2918; background: rgba(34,197,94,.2); border-color: rgba(34,197,94,.35); }
+.badge.danger{  color:#2a0b0b; background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.35); }
+.badge.warn{    color:#2a210b; background: rgba(245,158,11,.2); border-color: rgba(245,158,11,.35); }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding: 8px 12px; border-radius: 10px; border:1px solid var(--border);
+  background: var(--panel-2); color: var(--fg);
+  transition: transform .06s ease, filter .15s ease;
+}
+.btn:hover{ transform: scale(1.02); filter: brightness(1.05); }
+.btn:disabled{ opacity: var(--loading); cursor: not-allowed; }
+.btn.primary{ background: var(--pri-weak); border-color: rgba(79,227,193,.35); color: var(--fg); }
+
+.muted{ color: var(--fg-muted); }
+
+/* 표 공용 */
+.table{
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table th, .table td{
+  padding: 10px 12px; border-bottom:1px solid var(--border);
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.table th:first-child, .table td:first-child{ text-align: left; }
+.table thead th{ background: var(--panel-2); color: var(--fg); }
+
+/* 스켈레톤 */
+.skeleton{
+  height: 180px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: sk 1.2s infinite linear;
+  border:1px solid var(--border);
+}
+@keyframes sk{ 0%{background-position:0%} 100%{background-position:200%} }
+
+
