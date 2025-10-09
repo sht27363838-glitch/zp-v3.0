@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react'
 import { readCsvLS, parseCsv, type CsvRow, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
+import ScrollWrap from '../../_components/ScrollWrap'   // ✅ 추가
 
 type Agg = {
   channel: string
@@ -57,10 +58,10 @@ export default function Growth() {
       <h1>채널 리그(ROAS/CPA/CTR)</h1>
 
       {rows.length === 0 ? (
-  <div className="skeleton" />
-) : (
-  <div className="scroll">
-    <table className="table">
+        <div className="skeleton" />
+      ) : (
+        <ScrollWrap>  {/* ✅ 이 줄부터 */}
+          <table className="table">
             <thead>
               <tr>
                 <th>채널</th>
@@ -90,7 +91,7 @@ export default function Growth() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollWrap>   {/* ✅ 여기까지 교체 */}
       )}
     </div>
   )
