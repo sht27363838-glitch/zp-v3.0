@@ -8,6 +8,9 @@ import { num, fmt } from '../../_lib/num'
 import { loadRules, evalGuards } from '../../_lib/rules'
 import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
 import ScrollWrap from '../../_components/ScrollWrap'
+import ErrorBanner from '../../_components/ErrorBanner'
+import DownloadCsv from '../../_components/DownloadCsv'
+
 
 export default function RewardsPage() {
   // ledger 로드
