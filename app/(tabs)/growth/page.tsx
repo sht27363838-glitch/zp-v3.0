@@ -5,6 +5,8 @@ import React, { useMemo } from 'react'
 import { readCsvLS, parseCsv, type CsvRow, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
 import ScrollWrap from '../../_components/ScrollWrap'
+import ErrorBanner from '../../_components/ErrorBanner'
+
 
 // ⬇️ 추가: 캐시형 파서 + Pager
 import { parseCsvCached } from '../../_lib/csvSafe'
@@ -65,6 +67,11 @@ export default function Growth() {
 
       {rows.length === 0 ? (
         <div className="skeleton" />
+      {rows.length === 0 && (
+  <ErrorBanner tone="info" title="데이터 없음"
+    message="kpi_daily.csv가 비어 있습니다. Tools에서 데모 업로드 후 확인하세요." />
+)}
+
       ) : (
         // ⬇️ 표 전체를 Pager로 감싸 페이징 (DOM 폭주 방지)
         <Pager data={rows} pageSize={50} render={(page) => (
