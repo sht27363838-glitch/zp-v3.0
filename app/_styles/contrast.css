@@ -158,6 +158,16 @@ svg, canvas { filter: contrast(115%) saturate(110%); }
 .muted,.text-dim{ color:var(--text-soft)!important; }
 .kpi-tile .value, .KpiTile .value{ color:var(--text-strong)!important; font-weight:700; }
 
+/* === v3.5: table readability === */
+.table tbody tr:nth-child(even){ background: rgba(0,0,0,.03) }
+.scroll, .ScrollWrap{ position: relative; max-height: 480px; overflow: auto; }
+/* thead 고정 (스크롤 해도 헤더 보이게) */
+.table thead th{
+  position: sticky; top: 0; z-index: 1;
+  backdrop-filter: blur(2px);
+}
+
+
 
 
 
