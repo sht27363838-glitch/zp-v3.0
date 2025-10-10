@@ -1,13 +1,12 @@
+// app/(tabs)/commerce/page.tsx
 'use client'
 
-import useIdle from '../../_lib/useIdle'
-import React, { useMemo, useDeferredValue } from 'react'
 import React, { useMemo, useState, useDeferredValue } from 'react'
+import useIdle from '../../_lib/useIdle'
 import { readCsvLS, parseCsv, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
 import CohortSpark from '../../_components/CohortSpark'
 import LtvCurve from '../../_components/LtvCurve'
-import useIdle from '../../_lib/useIdle'
 
 type Row = Record<string, any>
 
@@ -26,9 +25,24 @@ export default function Commerce() {
 
   // 3) 무거운 섹션은 한 박자 늦게 렌더
   const idleReady = useIdle(500)
-  const deferredRows = useDeferredValue(rows) // 입력 흔들릴 때 재렌더 폭주 방지
+  const deferredRows = useDeferredValue(rows)
 
-  // ====== UI
+  // 최근 8주 코호트/누적 (deferredRows 기준)
+  const byWeek = useMemo(() => {
+    const weeks = 8
+    const out:number[] = new Array(weeks).fill(0)
+    for (const r of deferredRows) {
+      const w = num((r as any).week_index) || 0
+      if (w >= 0 && w < weeks) out[w] += num((r as any).orders)
+    }
+    return out
+  }, [deferredRows])
+
+  const cum = useMemo(() => {
+    let acc = 0
+    return byWeek.map(v => (acc += v))
+  }, [byWeek])
+
   return (
     <div className="page">
       <h1>C2 — 전환/커머스 레이더</h1>
@@ -43,8 +57,8 @@ export default function Commerce() {
           <div className="waterfall" style={{ display: 'flex', gap: 12 }}>
             {[
               { label: '장바구니', val: aovData.carts },
-              { label: '주문', val: aovData.orders },
-              { label: '매출', val: aovData.revenue },
+              { label: '주문',     val: aovData.orders },
+              { label: '매출',     val: aovData.revenue },
             ].map((s, i) => (
               <div
                 key={i}
@@ -70,27 +84,11 @@ export default function Commerce() {
           <div className="skeleton" style={{ height: 180 }} />
         ) : (
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--gap)' }}>
-            {/* 주의: CohortSpark는 series, LtvCurve는 cum(누적) */}
-            {(() => {
-              // 최근 8주를 가볍게 계산 (deferredRows 사용)
-              const weeks = 8
-              const byWeek = Array.from({ length: weeks }, (_, i) => {
-                let s = 0
-                for (const r of deferredRows) if ((num(r.week_index) || 0) === i) s += num(r.orders)
-                return s
-              })
-              let acc = 0
-              const cum = byWeek.map(v => (acc += v))
-              return (
-                <>
-                  <div className="card">
-                    <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>코호트(주간)</div>
-                    <CohortSpark series={byWeek} />
-                  </div>
-                  <LtvCurve cum={cum} />
-                </>
-              )
-            })()}
+            <div className="card">
+              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>코호트(주간)</div>
+              <CohortSpark series={byWeek} />
+            </div>
+            <LtvCurve cum={cum} />
           </div>
         )}
       </div>
