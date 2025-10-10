@@ -1,3 +1,4 @@
+// app/_components/HeatMap.tsx
 'use client'
 
 import React, { useState } from 'react'
@@ -15,19 +16,45 @@ type Cell = {
 
 export default function HeatMap({ cells }: { cells: Cell[] }) {
   const [pick, setPick] = useState<Cell | null>(null)
+  const [hover, setHover] = useState<number | null>(null)
+
   const open = (c: Cell) => setPick(c)
   const close = () => setPick(null)
 
+  // RAF로 hover 상태 업데이트를 묶어서 리페인트/리스타일 비용 감소
+  const onEnter = (i: number) => {
+    requestAnimationFrame(() => setHover(i))
+  }
+  const onLeave = () => setHover(null)
+
   return (
     <>
-      <div className="grid" style={{ display: 'grid', gridTemplateColumns: '160px repeat(6,1fr)', gap: 6 }}>
+      <div
+        className="grid"
+        style={{ display: 'grid', gridTemplateColumns: '160px repeat(6,1fr)', gap: 6 }}
+      >
         {cells.map((c, i) => (
           <div
             key={i}
             className="cell"
-            title={`CR ${pct(c.cr, 1)} • 주문 ${fmt(c.orders)} • 클릭 ${fmt(c.clicks)}`}
+            onMouseEnter={() => onEnter(i)}
+            onMouseLeave={onLeave}
             onClick={() => open(c)}
-            style={{ background: heat(c.cr) }}
+            role="button"
+            tabIndex={0}
+            // ✅ title 제거 → 기본 브라우저 툴팁은 리페인트 유발
+            aria-label={`CR ${pct(c.cr, 1)} / 주문 ${fmt(c.orders)} / 클릭 ${fmt(c.clicks)}`}
+            style={{
+              background: heat(c.cr),
+              outline: 'none',
+              // 호버 시만 살짝 강조(가벼운 스타일만)
+              boxShadow: hover === i ? '0 0 0 2px rgba(79,227,193,.45)' : 'none',
+              transition: 'transform 80ms ease, box-shadow 80ms ease',
+              transform: hover === i ? 'translateY(-1px)' : 'none',
+              borderRadius: 8,
+              width: '100%',
+              height: 28,
+            }}
           />
         ))}
       </div>
@@ -43,7 +70,7 @@ export default function HeatMap({ cells }: { cells: Cell[] }) {
                 닫기
               </button>
             </div>
-            {/* Spark는 values prop을 받도록 통일했습니다 */}
+            {/* Spark는 values prop 사용(프로젝트 전역과 통일) */}
             <Spark values={pick.series} height={64} />
           </div>
         </div>
