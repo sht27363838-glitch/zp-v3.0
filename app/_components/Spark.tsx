@@ -1,30 +1,41 @@
+// app/_components/Spark.tsx
 'use client'
 import React from 'react'
 
 type Props = {
-  /** 표준 prop */
+  /** 권장: values 사용 (이전 호환용으로 series도 허용) */
   values?: number[]
-  /** 과거 호환(있어도 되고 없어도 됨) */
-  data?: number[]
   series?: number[]
   width?: number
   height?: number
 }
-export default React.memo(function Spark({ values, width=520, height=100 }: Props)
- {
-  const v = values ?? data ?? series ?? []
-  if (!v.length) return <div style={{ width, height }} />
 
-  const max = Math.max(...v, 1e-9)
-  const min = Math.min(...v, 0)
-  const xs = v.map((_, i) => (i / Math.max(1, v.length - 1)) * (width - 2))
-  const ys = v.map(n => height - 2 - ((n - min) / (max - min || 1)) * (height - 4))
+export default function Spark({ values, series, width = 240, height = 60 }: Props) {
+  const data = (values ?? series ?? []).map(v => Number(v || 0))
+  const n = data.length
+  const w = width
+  const h = height
+  const pad = 4
 
-  const d = xs.map((x, i) => `${i ? 'L' : 'M'}${x + 1},${ys[i] + 1}`).join(' ')
+  if (n <= 1) {
+    return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-label="empty spark" />
+  }
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const span = max - min || 1
+
+  const sx = (i: number) => pad + i * ((w - 2 * pad) / (n - 1))
+  const sy = (v: number) => h - pad - ((v - min) / span) * (h - 2 * pad)
+
+  let d = `M ${sx(0)} ${sy(data[0])}`
+  for (let i = 1; i < n; i++) {
+    d += ` L ${sx(i)} ${sy(data[i])}`
+  }
 
   return (
-    <svg width={width} height={height} aria-hidden>
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" />
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img">
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={2} />
     </svg>
   )
 }
