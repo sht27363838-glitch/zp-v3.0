@@ -143,4 +143,11 @@ svg, canvas { filter: contrast(115%) saturate(110%); }
 /* 혹시 투명도 스타일 탑재된 곳 한 번 더 방지 */
 *[style*="opacity"] { opacity: 1 !important; }
 
+/* 성능 모드: 박스 그림자 완화(리스트/히트맵 다량일 때) */
+:root {
+  --shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.card, .table { will-change: transform; }
+
+
 
