@@ -7,7 +7,7 @@ import { readCsvLS, parseCsv } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
 import { loadRules, evalGuards } from '../../_lib/rules'
 import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
-import ScrollWrap from '../../_components/ScrollWrap' // ✅ 추가
+import ScrollWrap from '../../_components/ScrollWrap'
 
 export default function RewardsPage() {
   // ledger 로드
@@ -47,22 +47,31 @@ export default function RewardsPage() {
   const last = lastTimeKey(cooldownKey)
   const canClick = Date.now() - last > (rules.triggers.dailyLoop.cooldownH * 3600_000)
 
-  function payoutDaily() {
-    if (!canClick) return
-    const lastMonthProfit = 1_000_000 // C4에서는 간단값(상세는 C0 참조)
-    const cut = guards.returnsHigh ? rules.debuffs.returnsSpike.payoutCut : 1
-    const s = (rules.triggers.dailyLoop.stablePct / 100) * lastMonthProfit * cut
-    const e = guards.adFatigue ? 0 : (rules.triggers.dailyLoop.edgePct / 100) * lastMonthProfit * cut
-    appendLedger({
-      date: new Date().toISOString().slice(0, 10),
-      mission: 'Daily Loop',
-      type: 'daily',
-      stable: s, edge: e,
-      note: guards.adFatigue ? 'EDGE LOCK' : (guards.returnsHigh ? 'PAYOUT CUT' : ''),
-      lock_until: ''
-    })
-    markTime(cooldownKey)
-    alert('✅ 보상 기록 완료 (일일)')
+  // ✅ 로딩 상태 + 중복 클릭 방지
+  const [loading, setLoading] = useState(false)
+
+  async function payoutDaily() {
+    if (!canClick || loading) return
+    try {
+      setLoading(true)
+      const lastMonthProfit = 1_000_000 // C4에서는 간단값(상세는 C0 참조)
+      const cut = guards.returnsHigh ? rules.debuffs.returnsSpike.payoutCut : 1
+      const s = (rules.triggers.dailyLoop.stablePct / 100) * lastMonthProfit * cut
+      const e = guards.adFatigue ? 0 : (rules.triggers.dailyLoop.edgePct / 100) * lastMonthProfit * cut
+
+      appendLedger({
+        date: new Date().toISOString().slice(0, 10),
+        mission: 'Daily Loop',
+        type: 'daily',
+        stable: s, edge: e,
+        note: guards.adFatigue ? 'EDGE LOCK' : (guards.returnsHigh ? 'PAYOUT CUT' : ''),
+        lock_until: ''
+      })
+      markTime(cooldownKey)
+      alert('✅ 보상 기록 완료 (일일)')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -85,8 +94,14 @@ export default function RewardsPage() {
       </div>
 
       <div className="row gap mt-4">
-        <button className="btn primary" disabled={!canClick} onClick={payoutDaily}>
-          보상 기록(일일)
+        {/* ✅ 로딩/쿨다운 반영 */}
+        <button
+          className="btn primary"
+          disabled={!canClick || loading}
+          style={{ opacity: loading ? 0.6 : 1 }}
+          onClick={payoutDaily}
+        >
+          {loading ? '처리 중…' : '보상 기록(일일)'}
         </button>
         {guards.adFatigue && <span className="badge warn">엣지 잠금</span>}
         {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
@@ -95,7 +110,7 @@ export default function RewardsPage() {
       <div className="mt-6">
         <div className="text-dim text-sm">※ 최근 50건</div>
 
-        {/* ✅ 여기: 기존 div(maxHeight/overflow) → ScrollWrap으로 교체 */}
+        {/* ✅ 스켈레톤 + 스크롤 래퍼 */}
         {data.rows.length === 0 ? (
           <div className="skeleton" />
         ) : (
