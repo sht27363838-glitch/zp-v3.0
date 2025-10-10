@@ -10,10 +10,8 @@ type Props = {
   width?: number
   height?: number
 }
-
-export default function Spark({
-  values, data, series, width = 160, height = 40,
-}: Props) {
+export default React.memo(function Spark({ values, width=520, height=100 }: Props)
+ {
   const v = values ?? data ?? series ?? []
   if (!v.length) return <div style={{ width, height }} />
 
