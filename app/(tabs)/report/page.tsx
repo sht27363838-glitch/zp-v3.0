@@ -6,6 +6,9 @@ import { readCsvLS, parseCsv, type CsvRow } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
 import KpiTile from '../../_components/KpiTile'
 import ScrollWrap from '../../_components/ScrollWrap' // ✅ 추가
+import ErrorBanner from '../../_components/ErrorBanner'
+import DownloadCsv from '../../_components/DownloadCsv'
+
 
 // 퍼센트 문자열을 보장하는 로컬 헬퍼(항상 string 반환)
 const pct1 = (v: number): string => `${(v * 100).toFixed(1)}%`
@@ -67,6 +70,11 @@ export default function ReportPage() {
         <KpiTile label="반품률" value={pct1(returnsRate)} />
         <KpiTile label="전월 순익(기준)" value={fmt(lastMonthProfit)} />
       </div>
+      {data.rows.length === 0 && (
+  <ErrorBanner tone="info" title="데이터 없음"
+    message="Tools에서 데모 CSV를 업로드하거나 kpi_daily.csv를 넣어주세요." />
+)}
+
 
       {/* ⬇️⬇️⬇️ ✅ 2) 여기가 ‘정확히’ 붙일 자리입니다 ⬇️⬇️⬇️ */}
       {data.rows.length === 0 ? (
@@ -109,6 +117,11 @@ export default function ReportPage() {
       {/* ⬆️⬆️⬆️ 여기까지 표 블록 ⬆️⬆️⬆️ */}
 
       {/* ✅ 3) 기존 설명 문단 — 표 블록 ‘아래’에 그대로 유지 */}
+      <div className="row" style={{gap:8, marginTop:16}}>
+  <DownloadCsv keyName="kpi_daily" label="kpi_daily.csv 다운로드"/>
+  <DownloadCsv keyName="settings"  label="settings.csv 다운로드"/>
+</div>
+
       <div style={{ marginTop: 16, opacity: 0.8 }}>
         <p className="text-sm">
           데이터 원본: <code>kpi_daily.csv</code>, 기준 순익:{' '}
