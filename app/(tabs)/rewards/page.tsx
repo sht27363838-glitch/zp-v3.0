@@ -11,7 +11,6 @@ import ScrollWrap from '../../_components/ScrollWrap'
 import ErrorBanner from '../../_components/ErrorBanner'
 import DownloadCsv from '../../_components/DownloadCsv'
 
-
 export default function RewardsPage() {
   // ledger 로드
   const raw = readCsvLS('ledger') || ''
@@ -50,7 +49,7 @@ export default function RewardsPage() {
   const last = lastTimeKey(cooldownKey)
   const canClick = Date.now() - last > (rules.triggers.dailyLoop.cooldownH * 3600_000)
 
-  // ✅ 로딩 상태 + 중복 클릭 방지
+  // 로딩 상태 + 중복 클릭 방지
   const [loading, setLoading] = useState(false)
 
   async function payoutDaily() {
@@ -97,7 +96,7 @@ export default function RewardsPage() {
       </div>
 
       <div className="row gap mt-4">
-        {/* ✅ 로딩/쿨다운 반영 */}
+        {/* 로딩/쿨다운 반영 */}
         <button
           className="btn primary"
           disabled={!canClick || loading}
@@ -110,13 +109,30 @@ export default function RewardsPage() {
         {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
       </div>
 
+      {/* ▼ “최근 50건” 제목/다운로드/빈상태 안내 묶음 */}
       <div className="mt-6">
-        <div className="text-dim text-sm">※ 최근 50건</div>
+        <div className="row" style={{alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
+          <div className="text-dim text-sm">※ 최근 50건</div>
+          {/* CSV 다운로드 버튼 (제목 근처) */}
+          <div className="row" style={{gap:8}}>
+            <DownloadCsv keyName="ledger" label="ledger.csv 다운로드" />
+          </div>
+        </div>
 
-        {/* ✅ 스켈레톤 + 스크롤 래퍼 */}
-        {data.rows.length === 0 ? (
-          <div className="skeleton" />
-        ) : (
+        {/* 빈 상태 배너 + 스켈레톤 */}
+        {data.rows.length === 0 && (
+          <>
+            <ErrorBanner
+              tone="info"
+              title="기록 없음"
+              message="아직 ledger가 비어 있습니다. 상단 ‘보상 기록(일일)’ 버튼으로 첫 기록을 남겨보세요."
+            />
+            <div className="skeleton" />
+          </>
+        )}
+
+        {/* 표 */}
+        {data.rows.length > 0 && (
           <ScrollWrap>
             <table className="table">
               <thead>
