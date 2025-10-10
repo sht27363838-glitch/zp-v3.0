@@ -2,7 +2,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { readCsvLS, parseCsv } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
 import { loadRules, evalGuards } from '../../_lib/rules'
