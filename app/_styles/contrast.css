@@ -149,5 +149,15 @@ svg, canvas { filter: contrast(115%) saturate(110%); }
 }
 .card, .table { will-change: transform; }
 
+/* v3.5: 글자 대비 강제 */
+:root{ --text-strong:#111; --text-soft:#222; }
+@media (prefers-color-scheme: dark){
+  :root{ --text-strong:#ecf3fb; --text-soft:#ced9e6; }
+}
+.page, .card, .kpi-grid, .table{ color:var(--text-strong)!important; }
+.muted,.text-dim{ color:var(--text-soft)!important; }
+.kpi-tile .value, .KpiTile .value{ color:var(--text-strong)!important; font-weight:700; }
+
+
 
 
