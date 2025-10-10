@@ -6,6 +6,10 @@ import { readCsvLS, parseCsv, type CsvRow, type CsvTable } from '../../_lib/read
 import { num, fmt, pct } from '../../_lib/num'
 import ScrollWrap from '../../_components/ScrollWrap'
 
+// ⬇️ 추가: 캐시형 파서 + Pager
+import { parseCsvCached } from '../../_lib/csvSafe'
+import Pager from '../../_components/Pager'
+
 type Agg = {
   channel: string
   visits: number
@@ -18,11 +22,9 @@ type Agg = {
 export default function Growth() {
   const raw = readCsvLS('kpi_daily') || ''
 
-  // 한 번만 파싱 (SSR 안전)
-  const data: CsvTable = useMemo(
-    () => (raw ? parseCsv(raw) : { headers: [], rows: [] }),
-    [raw]
-  )
+  // ⬇️ 교체: 기존 parseCsv → 캐시형 파서로
+  // const data: CsvTable = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
+  const data: CsvTable = useMemo(() => parseCsvCached('kpi_daily'), [raw])
 
   // 채널별 집계
   const by: Record<string, Agg> = {}
@@ -64,38 +66,41 @@ export default function Growth() {
       {rows.length === 0 ? (
         <div className="skeleton" />
       ) : (
-        <ScrollWrap>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>채널</th>
-                <th>방문</th>
-                <th>클릭</th>
-                <th>주문</th>
-                <th>매출</th>
-                <th>광고비</th>
-                <th>ROAS</th>
-                <th>CPA</th>
-                <th>CTR</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.channel}>
-                  <td>{r.channel}</td>
-                  <td>{fmt(r.visits)}</td>
-                  <td>{fmt(r.clicks)}</td>
-                  <td>{fmt(r.orders)}</td>
-                  <td>{fmt(r.revenue)}</td>
-                  <td>{fmt(r.spend)}</td>
-                  <td>{pct1(r.ROAS)}</td>
-                  <td>{fmt(r.CPA)}</td>
-                  <td>{pct1(r.CTR)}</td>
+        // ⬇️ 표 전체를 Pager로 감싸 페이징 (DOM 폭주 방지)
+        <Pager data={rows} pageSize={50} render={(page) => (
+          <ScrollWrap>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>채널</th>
+                  <th>방문</th>
+                  <th>클릭</th>
+                  <th>주문</th>
+                  <th>매출</th>
+                  <th>광고비</th>
+                  <th>ROAS</th>
+                  <th>CPA</th>
+                  <th>CTR</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </ScrollWrap>
+              </thead>
+              <tbody>
+                {page.map((r) => (
+                  <tr key={r.channel}>
+                    <td>{r.channel}</td>
+                    <td>{fmt(r.visits)}</td>
+                    <td>{fmt(r.clicks)}</td>
+                    <td>{fmt(r.orders)}</td>
+                    <td>{fmt(r.revenue)}</td>
+                    <td>{fmt(r.spend)}</td>
+                    <td>{pct1(r.ROAS)}</td>
+                    <td>{fmt(r.CPA)}</td>
+                    <td>{pct1(r.CTR)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollWrap>
+        )} />
       )}
     </div>
   )
