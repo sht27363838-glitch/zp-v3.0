@@ -114,3 +114,16 @@ export function toCsv(table: CsvTable): string {
     .join("\n");
   return head + (body ? "\n" + body : "");
 }
+
+// v3.5: CSV 파싱 캐시
+const __csvCache = new Map<string, ReturnType<typeof parseCsv>>()
+
+export function parseCsvCached(raw: string){
+  if(!raw) return { headers: [], rows: [] }
+  const hit = __csvCache.get(raw)
+  if(hit) return hit
+  const out = parseCsv(raw)
+  __csvCache.set(raw, out)
+  return out
+}
+
