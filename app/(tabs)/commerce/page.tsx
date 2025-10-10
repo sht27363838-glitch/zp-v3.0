@@ -1,5 +1,7 @@
 'use client'
 
+import useIdle from '../../_lib/useIdle'
+import React, { useMemo, useDeferredValue } from 'react'
 import React, { useMemo, useState, useDeferredValue } from 'react'
 import { readCsvLS, parseCsv, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
