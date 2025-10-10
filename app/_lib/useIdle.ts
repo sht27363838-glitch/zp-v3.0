@@ -1,18 +1,19 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-export default function useIdle(delay = 400) {
-  const [ready, setReady] = useState(false)
-  useEffect(() => {
-    let t = setTimeout(() => {
-      // 브라우저가 한숨 돌린 뒤 작업
-      if ('requestIdleCallback' in window) {
-        ;(window as any).requestIdleCallback(() => setReady(true))
-      } else {
-        setReady(true)
-      }
-    }, delay)
-    return () => clearTimeout(t)
-  }, [delay])
+// requestIdleCallback 폴리필
+const ric = (cb:Function)=> {
+  if (typeof (window as any).requestIdleCallback === 'function')
+    return (window as any).requestIdleCallback(cb);
+  return setTimeout(()=>cb({}), 150);
+}
+
+export default function useIdle(ms=400){
+  const [ready,setReady]=useState(false)
+  useEffect(()=>{
+    const t = setTimeout(()=> ric(()=>setReady(true)), ms)
+    return ()=> clearTimeout(t as any)
+  },[ms])
   return ready
 }
+
