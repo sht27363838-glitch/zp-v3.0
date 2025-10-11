@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react'
 import { readCsvLS, parseCsv } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num' // ← 프로젝트 경로에 맞춰주세요 (__lib가 아니라 _lib이면 _lib로)
 import { loadRules, evalGuards } from '../../_lib/rules'
-import { appendLedger, lastTimeKey, markTime } from '../../__ib/ledger'
+import { appendLedger, lastTimeKey, markTime } from '../../_ib/ledger'
 import ScrollWrap from '../../_components/ScrollWrap'
 import ErrorBanner from '../../_components/ErrorBanner'
 import DownloadCsv from '../../_components/DownloadCsv'
