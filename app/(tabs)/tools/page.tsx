@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 
 // (안전) 클라이언트 전용 위젯이므로 SSR 비활성화 로드
-const CsvWizard = dynamic(() => import('@/app/_components/CsvWizard'), { ssr: false });
+const CsvWizard = dynamic(() => import('../../_components/CsvWizard'), { ssr: false });
 
 export default function ToolsPage() {
   return (
