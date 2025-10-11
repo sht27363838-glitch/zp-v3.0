@@ -1,18 +1,16 @@
-// app/(tabs)/rewards/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
 import React, { useMemo, useState } from 'react'
 import { readCsvLS, parseCsv } from '../../_lib/readCsv'
-import { num, fmt } from '../../_lib/num'
-import { loadRules, evalGuards } from '../../_lib/rules'
-import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
-import ScrollWrap from '../../_components/ScrollWrap'
-import ErrorBanner from '../../_components/ErrorBanner'
-import DownloadCsv from '../../_components/DownloadCsv'
+import { num, fmt } from '../../__lib/num' // ← 프로젝트 경로에 맞춰주세요 (__lib가 아니라 _lib이면 _lib로)
+import { loadRules, evalGuards } from '../../__lib/rules'
+import { appendLedger, lastTimeKey, markTime } from '../../__lib/ledger'
+import ScrollWrap from '../../__components/ScrollWrap'
+import ErrorBanner from '../../__components/ErrorBanner'
+import DownloadCsv from '../../__components/DownloadCsv'
 
 export default function RewardsPage() {
-  // ledger 로드
   const raw = readCsvLS('ledger') || ''
   const data = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
 
@@ -24,7 +22,6 @@ export default function RewardsPage() {
   const total = stable + edge
   const edgeShare = total ? edge / total : 0
 
-  // KPI를 최소한으로 읽어 경보 계산
   const kraw = readCsvLS('kpi_daily') || ''
   const kdata = useMemo(() => (kraw ? parseCsv(kraw) : { headers: [], rows: [] }), [kraw])
   let visits = 0, clicks = 0, orders = 0, revenue = 0, adCost = 0, returns = 0
@@ -44,23 +41,19 @@ export default function RewardsPage() {
     rules
   )
 
-  // C4에서도 일일 보상 버튼 제공(동일 쿨다운 공유)
   const cooldownKey = 'dailyLoop.last'
   const last = lastTimeKey(cooldownKey)
   const canClick = Date.now() - last > (rules.triggers.dailyLoop.cooldownH * 3600_000)
 
-  // 로딩 상태 + 중복 클릭 방지
   const [loading, setLoading] = useState(false)
-
   async function payoutDaily() {
     if (!canClick || loading) return
     try {
       setLoading(true)
-      const lastMonthProfit = 1_000_000 // C4에서는 간단값(상세는 C0 참조)
+      const lastMonthProfit = 1_000_000
       const cut = guards.returnsHigh ? rules.debuffs.returnsSpike.payoutCut : 1
       const s = (rules.triggers.dailyLoop.stablePct / 100) * lastMonthProfit * cut
       const e = guards.adFatigue ? 0 : (rules.triggers.dailyLoop.edgePct / 100) * lastMonthProfit * cut
-
       appendLedger({
         date: new Date().toISOString().slice(0, 10),
         mission: 'Daily Loop',
@@ -96,7 +89,6 @@ export default function RewardsPage() {
       </div>
 
       <div className="row gap mt-4">
-        {/* 로딩/쿨다운 반영 */}
         <button
           className="btn primary"
           disabled={!canClick || loading}
@@ -109,30 +101,22 @@ export default function RewardsPage() {
         {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
       </div>
 
-      {/* ▼ “최근 50건” 제목/다운로드/빈상태 안내 묶음 */}
       <div className="mt-6">
-        <div className="row" style={{alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
-          <div className="text-dim text-sm">※ 최근 50건</div>
-          {/* CSV 다운로드 버튼 (제목 근처) */}
-          <div className="row" style={{gap:8}}>
-            <DownloadCsv keyName="ledger" label="ledger.csv 다운로드" />
-          </div>
+        <div className="row" style={{ gap: 8, margin: '8px 0' }}>
+          <DownloadCsv keyName="ledger" label="ledger.csv 다운로드" />
         </div>
 
-        {/* 빈 상태 배너 + 스켈레톤 */}
         {data.rows.length === 0 && (
-          <>
-            <ErrorBanner
-              tone="info"
-              title="기록 없음"
-              message="아직 ledger가 비어 있습니다. 상단 ‘보상 기록(일일)’ 버튼으로 첫 기록을 남겨보세요."
-            />
-            <div className="skeleton" />
-          </>
+          <ErrorBanner
+            tone="info"
+            title="기록 없음"
+            message="아직 ledger가 비어 있습니다. 상단 '보상 기록(일일)'로 기록을 남겨보세요."
+          />
         )}
 
-        {/* 표 */}
-        {data.rows.length > 0 && (
+        {data.rows.length === 0 ? (
+          <div className="skeleton" />
+        ) : (
           <ScrollWrap>
             <table className="table">
               <thead>
