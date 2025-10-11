@@ -50,6 +50,20 @@ export default function Home(){
         <KpiTile label="보상총액" value={fmt(capAmt)} note="(ledger 합계)" onClick={()=>openDrill('reward')}/>
       </div>
 
+      <div className="grid" style={{gridTemplateColumns:'1fr', gap:'var(--gap)', marginTop:12}}>
+      <InsightCard
+        title="주간 매출 추이"
+        note="최근 7일"
+        series={last7.map(r=> Number(r.revenue||0))}
+      />
+      {/* 선택: 30일 카드 하나 더 */}
+      <InsightCard
+        title="30일 매출 추이"
+        note="최근 30일"
+        series={last30.map(r=> Number(r.revenue||0))}
+      />
+    </div>
+
       {/* ⬇️ 추가: 상단 미니 스파크 카드 */}
 <InsightCard
   title="주간 매출 추이"
