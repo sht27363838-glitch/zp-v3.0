@@ -1,14 +1,14 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-  
-import { readCsvLS, parseCsv } from '@lib/readCsv'
-import { num, fmt } from '@lib/num'
-import { loadRules, evalGuards } from '@lib/rules'
-import { appendLedger, lastTimeKey, markTime } from '@lib/ledger'
-import ScrollWrap from '@cmp/ScrollWrap'
-import ErrorBanner from '@cmp/ErrorBanner'
-import DownloadCsv from '@cmp/DownloadCsv'
+import React, { useMemo, useState } from 'react'   // ← useMemo, useState 추가/정리
+import { readCsvLS, parseCsv } from '../../_lib/readCsv'
+import { num, fmt } from '../../_lib/num'
+import { loadRules, evalGuards } from '../../_lib/rules'
+import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
+import ScrollWrap from '../../_components/ScrollWrap'
+import ErrorBanner from '../../_components/ErrorBanner'
+import DownloadCsv from '../../_components/DownloadCsv'
 
 
 export default function RewardsPage() {
