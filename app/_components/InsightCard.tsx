@@ -23,7 +23,7 @@ export default function InsightCard({
         </div>
         {right}
       </div>
-      {series && <Spark series={series} height={h} width={w} />}
+      {series && <Spark values={series} height={h} width={w} />}
       {children}
     </div>
   )
