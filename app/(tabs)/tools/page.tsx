@@ -1,5 +1,6 @@
 'use client';
 
+import ErrorBanner from '@/app/_components/ErrorBanner'
 import dynamic from 'next/dynamic';
 
 // (안전) 클라이언트 전용 위젯이므로 SSR 비활성화 로드
@@ -20,4 +21,5 @@ export default function ToolsPage() {
     </div>
   );
 }
-
+<ErrorBanner tone="warn" title="CSV 헤더 누락"
+  message="Tools → 템플릿 버튼을 눌러 예시 헤더를 붙여넣은 뒤 다시 저장하세요." />
