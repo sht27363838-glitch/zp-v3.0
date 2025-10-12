@@ -167,6 +167,12 @@ svg, canvas { filter: contrast(115%) saturate(110%); }
   backdrop-filter: blur(2px);
 }
 
+/* ===== quick bump for readability ===== */
+:root{ --text:#ffffff; --muted:#d7e1ee; --tile-bg:rgba(255,255,255,.08); --tile-head:rgba(255,255,255,.12); }
+.card .label,.muted{ color:var(--muted)!important; }
+.table thead th{ color:#eef6ff!important; }
+
+
 
 
 
