@@ -172,6 +172,28 @@ svg, canvas { filter: contrast(115%) saturate(110%); }
 .card .label,.muted{ color:var(--muted)!important; }
 .table thead th{ color:#eef6ff!important; }
 
+/* === TYPO & SPACING TOKENS ========================================= */
+:root{
+  /* font sizes */
+  --fs-12:12px; --fs-14:14px; --fs-16:16px; --fs-20:20px;
+  --lh-140:1.4; --lh-150:1.5;
+  /* spacing */
+  --pad-8:8px; --pad-12:12px; --gap:12px;
+}
+
+/* 본문/제목 기본값 단단히 고정 */
+html,body{ font-size:var(--fs-14); line-height:var(--lh-150); }
+h1{ font-size:28px; line-height:var(--lh-140); margin:16px 0 12px; }
+h2{ font-size:22px; line-height:var(--lh-140); margin:14px 0 10px; }
+h3{ font-size:18px; line-height:var(--lh-140); margin:10px 0 8px; }
+
+/* 카드/표 내부 패딩 통일 */
+.card{ padding:var(--pad-12); }
+.table td,.table th{ padding:.65rem .85rem; }
+.badge{ font-size:var(--fs-12); }
+.btn{ padding:.5rem .8rem; font-size:var(--fs-14); }
+
+
 
 
 
