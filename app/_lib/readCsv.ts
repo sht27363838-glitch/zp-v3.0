@@ -127,3 +127,12 @@ export function parseCsvCached(raw: string){
   return out
 }
 
+import { DEMO_KPI } from './demo'
+
+export function readCsvOrDemo(key: string){
+  const raw = readCsvLS(key) || ''
+  if (raw && raw.trim().split('\n').length > 1) return raw
+  if (key === 'kpi_daily') return DEMO_KPI   // 키별 데모 매핑
+  return raw
+}
+
