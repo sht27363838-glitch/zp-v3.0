@@ -1,25 +1,20 @@
-// /app/layout.tsx  (server component)
-import './_styles/contrast.css'
-import './_styles/tokens.css'
 import './_styles/base.css'
-import './globals.css';
-import Nav from './_components/Nav';
-import { useEffect } from 'react'
-import { checkContrastOnce } from './_lib/a11y'
+import './globals.css'
+import Nav from './_components/Nav'
+import ClientBoot from './_components/ClientBoot'
+import React from 'react'
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  useEffect(()=>{ checkContrastOnce() },[])
-  return <html lang="ko"><body>{children}</body></html>
-}
 export const metadata = {
   title: 'ZP Command v3',
   description: 'QuestForge control tower',
-};
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // 레이아웃은 서버 컴포넌트(기본). useEffect는 ClientBoot에서 처리.
   return (
     <html lang="ko">
       <body>
+        <ClientBoot />
         <Nav />
         <main className="container">{children}</main>
       </body>
