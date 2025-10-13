@@ -23,7 +23,11 @@ export default function InsightCard({
         </div>
         {right}
       </div>
-      <Spark series={series} height={h} width={w} style={{ color: 'var(--primary)' }} />
+      
+     <div style={{ color: 'var(--primary)' }}>
+  {series?.length ? <Spark series={series} height={h} width={w} /> : null}
+</div>
+      
       {children}
     </div>
   )
