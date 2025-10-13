@@ -8,7 +8,8 @@ import dynamic from 'next/dynamic';
   필수 헤더: <code>date, channel, visits, clicks, carts, orders, revenue, ad_cost, returns</code>
 </p>
 
-const CsvWizard = dynamic(() => import('../../_components/CsvWizard'), { ssr: false });
+const CsvWizard = dynamic(() => import('@cmp/CsvWizard'), { ssr: false });
++ import ErrorBanner from '@cmp/ErrorBanner'
 
 export default function ToolsPage() {
   return (
