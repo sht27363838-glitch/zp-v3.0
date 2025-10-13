@@ -193,6 +193,45 @@ h3{ font-size:18px; line-height:var(--lh-140); margin:10px 0 8px; }
 .badge{ font-size:var(--fs-12); }
 .btn{ padding:.5rem .8rem; font-size:var(--fs-14); }
 
+/* ======= KPI 타일 가독성 핫픽스 ======= */
+:root{
+  /* 필요 시 조정 */
+  --panel-strong: #141c26;
+  --text-strong: #eaf2ff;
+  --text-muted-strong: #c2d4eb;
+}
+
+/* 기본 텍스트 색을 확실히 밝게 */
+html, body, .page { color: var(--text-strong) !important; }
+
+/* KPI 타일(컴포넌트/클래스 네이밍 다양성 모두 커버) */
+.kpi-grid .tile,
+.kpi-tile,
+.KpiTile,
+.card.kpi {
+  background: var(--panel-strong) !important;
+  color: var(--text-strong) !important;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* 라벨(작은 글씨) */
+.kpi-grid .tile .label,
+.kpi-tile .label,
+.KpiTile .label {
+  color: var(--text-muted-strong) !important;
+  opacity: 1 !important;
+}
+
+/* 값(큰 숫자) */
+.kpi-grid .tile .value,
+.kpi-tile .value,
+.KpiTile .value {
+  color: var(--text-strong) !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+}
 
 
 
