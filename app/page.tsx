@@ -1,4 +1,5 @@
 'use client'
+import TrendBadge from './_components/TrendBadge'
 import InsightCard from './_components/InsightCard'
 import React, {useMemo, useState} from 'react'
 import { readCsvOrDemo } from './_lib/readCsv'
@@ -29,6 +30,11 @@ export default function Home(){
   const last7  = lastNDays(rows, 7)
   const last30 = lastNDays(rows, 30)
 
+  // 지난 7일 & 그 직전 7일 합계
+const prev7  = lastNDays(rows, 14).slice(0, 7)
+const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'returns') =>
+  arr.reduce((s, r) => s + Number((r as any)[key] || 0), 0)
+
   const mapMetric = (t: typeof topic, xr: typeof rows)=>{
     if(t==='revenue') return series(xr, 'revenue')
     if(t==='returns') return series(xr, 'returns')
@@ -50,6 +56,30 @@ export default function Home(){
         <KpiTile label="반품률" value={pct(sumAll.ReturnsRate||0)} onClick={()=>openDrill('returns')}/>
         <KpiTile label="보상총액" value={fmt(capAmt)} note="(ledger 합계)" onClick={()=>openDrill('reward')}/>
       </div>
+
+      <div className="grid">
+  <KpiTile
+    label="매출"
+    value={fmt(sumAll.total.revenue)}
+    right={<TrendBadge now={sum(last7,'revenue')} prev={sum(prev7,'revenue')} />}
+    onClick={()=>openDrill('revenue')}
+  />
+  <KpiTile
+    label="ROAS"
+    value={(sumAll.ROAS||0).toFixed(2)}
+    right={<TrendBadge now={sum(last7,'revenue')/(sum(last7,'ad_cost')||1)}
+                       prev={sum(prev7,'revenue')/(sum(prev7,'ad_cost')||1)} />}
+    onClick={()=>openDrill('roas')}
+  />
+  <KpiTile
+    label="반품률"
+    value={pct(sumAll.ReturnsRate||0)}
+    right={<TrendBadge invert now={(sum(last7,'returns')/(sum(last7,'orders')||1))}
+                       prev={(sum(prev7,'returns')/(sum(prev7,'orders')||1))} />}
+    onClick={()=>openDrill('returns')}
+  />
+  {/* 나머지 타일은 필요 시 동일 패턴으로 */}
+</div>
 
       {/* 인사이트 카드 */}
       <div className="grid" style={{gridTemplateColumns:'1fr', gap:'var(--gap)', marginTop:12}}>
