@@ -72,3 +72,7 @@ h1,h2,h3 { color: var(--text); }
 }
 @keyframes shine{ 0%{background-position:-200px 0} 100%{background-position:calc(200px + 100%) 0} }
 
+.kpi-tile .right .badge { font-weight: 700; }
+.kpi-tile .label { font-weight: 600; }
+
+
