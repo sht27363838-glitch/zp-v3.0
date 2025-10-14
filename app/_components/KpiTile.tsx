@@ -9,6 +9,7 @@ type Props = {
   /** 작은 보조 설명(선택) */
   note?: string
   /** 클릭 시 드릴다운 등(선택) */
+  right?: React.ReactNode    
   onClick?: () => void
   /** 경고/위험 등 색상 토큰(선택): 'ok' | 'warn' | 'danger' */
   tone?: 'ok' | 'warn' | 'danger'
