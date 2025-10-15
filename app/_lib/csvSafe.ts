@@ -1,10 +1,11 @@
 // app/_lib/csvSafe.ts
 'use client'
-import { parseCsv, type CsvRow, type CsvTable, readCsvLS } from './readCsv'
+import { parseCsv, type CsvTable, readCsvLS } from './readCsv'
 
 type Cache = Record<string, { raw: string; table: CsvTable }>
 const cache: Cache = {}
 
+/** 로컬스토리지 raw가 바뀌지 않으면 파싱 결과를 재사용 */
 export function parseCsvCached(key: string): CsvTable {
   const raw = readCsvLS(key) || ''
   if (!raw) return { headers: [], rows: [] }
@@ -15,7 +16,7 @@ export function parseCsvCached(key: string): CsvTable {
   return table
 }
 
-// 페이지별 필수 헤더(간단)
+/** 페이지별 필수 헤더(간단 검증) */
 export const REQUIRED: Record<string, string[]> = {
   kpi_daily: ['date','channel','visits','clicks','orders','revenue','ad_cost','returns'],
   ledger: ['date','mission','type','stable','edge','note'],
@@ -29,13 +30,5 @@ export function validate(key: keyof typeof REQUIRED, table: CsvTable){
   return { ok: missing.length === 0, missing }
 }
 
-// 안전 숫자 변환
+/** 안전 숫자 변환 */
 export const n = (v:any)=> Number(v||0) || 0
-
-export function injectDemo(key:'kpi_daily'|'ledger'){
-  if(typeof window==='undefined') return
-  const demo = key==='kpi_daily'? DEMO_KPI_DAILY : DEMO_LEDGER
-  localStorage.setItem(key, demo.trim())
-  location.reload()
-}
-
