@@ -9,6 +9,7 @@ import { num, fmt, pct } from '@lib/num'
 import VirtualTable from '../../_components/VirtualTable'
 import ErrorBanner from '@cmp/ErrorBanner'
 import Pager from '@cmp/Pager'
+import ExportBar from '@cmp/ExportBar'
 
 export default function Growth(){
   const raw = readCsvOrDemo('kpi_daily')
@@ -39,6 +40,7 @@ export default function Growth(){
     <div className="page">
      <div style={{display:'flex', alignItems:'center', gap:8}}>
   <h1>채널 리그(ROAS/CPA/CTR)</h1>
+       <ExportBar selector=".page" />
   <span className="badge">{sourceTag('kpi_daily')}</span>
 </div>
 
