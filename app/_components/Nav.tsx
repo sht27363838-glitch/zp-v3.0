@@ -1,28 +1,29 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-
-const tabs = [
-  ['/', '지휘소'],
-  ['/growth', '유입'],
-  ['/commerce', '전환'],
-  ['/rewards', '보상'],
-  ['/ops', '운영'],
-  ['/experiments', '실험'],
-  ['/report', '리포트'],
-  ['/tools', '도구'],
-] as const;
+'use client'
+import Link from 'next/link'
+import React, {useMemo} from 'react'
+import { getAlertFlags } from '@lib/guards'
 
 export default function Nav(){
-  const p = usePathname() || '/';
+  const flags = useMemo(()=> getAlertFlags(), [])
+  const dangerOn = flags.roasLow || flags.crDrop || flags.returnsSpike
+
+  const Tab = ({href, children}:{href:string;children:React.ReactNode})=>(
+    <li className="nav-item">
+      <Link href={href} className="nav-link">{children}</Link>
+      {href==='/report' && dangerOn && <span className="dot danger" aria-label="경보"/>}
+    </li>
+  )
+
   return (
-    <div className="nav">
-      {tabs.map(([href,label]) => (
-        <Link key={href} href={href as unknown as any} className={'tab ' + (p===href ? 'active' : '')}>
-          {label}
-        </Link>
-      ))}
-    </div>
-  );
+    <nav className="nav">
+      <ul className="nav-list">
+        <Tab href="/">지휘소</Tab>
+        <Tab href="/growth">유입</Tab>
+        <Tab href="/commerce">전환</Tab>
+        <Tab href="/report">리포트</Tab>
+        <Tab href="/rewards">보상</Tab>
+        <Tab href="/tools">도구</Tab>
+      </ul>
+    </nav>
+  )
 }
