@@ -1,25 +1,29 @@
-// app/(tabs)/tools/page.tsx
 'use client'
-
-import { injectDemo } from '../../_lib/readCsv'
 import React from 'react'
 import dynamic from 'next/dynamic'
+import ErrorBanner from '@cmp/ErrorBanner'
+import { injectDemo, clearToLive } from '@lib/csvSafe'
 
-// CsvWizard는 클라이언트 전용이므로 SSR 비활성
-const CsvWizard = dynamic(() => import('@cmp/CsvWizard'), { ssr: false })
+const CsvWizard = dynamic(() => import('@cmp/CsvWizard'), { ssr:false })
 
-export default function ToolsPage() {
+export default function ToolsPage(){
   return (
-    <div className="page">
-      <h1>Tools</h1>
-      <p className="muted">CSV 업/다운로드 & 검증</p>
+    <div className="container page">
+      <h1>도구</h1>
 
-      <div className="row" style={{gap:8, margin:'8px 0'}}>
-  <button className="btn" onClick={()=>injectDemo('kpi_daily')}>데모 KPI 주입</button>
-  <button className="btn" onClick={()=>injectDemo('ledger')}>데모 Ledger 주입</button>
-</div>
+      <ErrorBanner tone="info" title="데이터 소스 안내"
+        message="아래 버튼으로 데모 데이터를 즉시 주입/초기화할 수 있습니다." show />
 
-      <div className="card">
+      <div className="row" style={{gap:8, margin:'8px 0', display:'flex'}}>
+        <button className="btn" onClick={()=>injectDemo('kpi_daily')}>데모 KPI 주입</button>
+        <button className="btn" onClick={()=>injectDemo('ledger')}>데모 Ledger 주입</button>
+        <button className="btn" onClick={()=>clearToLive('kpi_daily')}>KPI 초기화(LIVE)</button>
+        <button className="btn" onClick={()=>clearToLive('ledger')}>Ledger 초기화(LIVE)</button>
+      </div>
+
+      <div className="card" style={{marginTop:12}}>
+        <div className="title">CSV 관리</div>
+        <div className="note" style={{marginBottom:8}}>업로드/다운로드</div>
         <CsvWizard />
       </div>
     </div>
