@@ -1,59 +1,71 @@
+// app/(tabs)/report/page.tsx
 'use client'
 
-import { sourceTag } from '@lib/csvSafe'
-import React, {useMemo} from 'react'
-import { readCsvOrDemo } from '@lib/csvSafe'
+import React, { useMemo } from 'react'
+import { sourceTag, readCsvOrDemo, validate } from '@lib/csvSafe'
 import { parseCsv, type CsvRow } from '@lib/readCsv'
-import { validate } from '@lib/csvSafe'
 import { num, fmt } from '@lib/num'
 import KpiTile from '@cmp/KpiTile'
-import ScrollWrap from '@cmp/ScrollWrap'
 import ErrorBanner from '@cmp/ErrorBanner'
-import Pager from '@cmp/Pager'
 import ExportBar from '@cmp/ExportBar'
-import VirtualTable from '../../_components/VirtualTable'
+import VirtualTable from '@cmp/VirtualTable'
 
 const pct1 = (v:number)=> `${(v*100).toFixed(1)}%`
 
 function readLastMonthProfit(): number {
   const raw = readCsvOrDemo('settings') || ''
-  if(!raw) return 1_000_000
-  try{
+  if (!raw) return 1_000_000
+  try {
     const rows = parseCsv(raw).rows as any[]
     const p = Number(rows?.[0]?.last_month_profit ?? 0)
-    return isFinite(p)&&p>0 ? p : 1_000_000
-  }catch{ return 1_000_000 }
+    return isFinite(p) && p > 0 ? p : 1_000_000
+  } catch {
+    return 1_000_000
+  }
 }
 
 export default function ReportPage(){
-  const raw = readCsvOrDemo('kpi_daily')
+  // ✅ 데모/로컬 자동 대체
+  const raw  = readCsvOrDemo('kpi_daily')
   const data = useMemo(()=> parseCsv(raw), [raw])
   const check = validate('kpi_daily', data)
 
+  // 합계
   let visits=0, clicks=0, orders=0, revenue=0, adCost=0, returns=0
   for(const r of data.rows as CsvRow[]){
-    visits+=num(r.visits); clicks+=num(r.clicks); orders+=num(r.orders)
-    revenue+=num(r.revenue); adCost+=num(r.ad_cost); returns+=num(r.returns)
+    visits += num(r.visits)
+    clicks += num(r.clicks)
+    orders += num(r.orders)
+    revenue += num(r.revenue)
+    adCost  += num(r.ad_cost)
+    returns += num(r.returns)
   }
-  const ROAS = adCost? revenue/adCost : 0
-  const CR   = visits? orders/visits : 0
-  const AOV  = orders? revenue/orders : 0
-  const returnsRate = orders? returns/orders : 0
+  const ROAS = adCost ? revenue / adCost : 0
+  const CR   = visits ? orders / visits : 0
+  const AOV  = orders ? revenue / orders : 0
+  const returnsRate = orders ? returns / orders : 0
   const lastMonthProfit = readLastMonthProfit()
 
   return (
     <div className="page">
+      {/* 제목 + 전체 KPI 캡처용 ExportBar + 데이터 소스 배지 */}
       <div style={{display:'flex', alignItems:'center', gap:8}}>
-  <h1>지휘소(C0) — 요약</h1>
-        <ExportBar selector=".kpi-grid" />  
-  <span className="badge">{sourceTag('kpi_daily')}</span>
-</div>
+        <h1>지휘소(C0) — 요약</h1>
+        <ExportBar selector=".kpi-grid" />
+        <span className="badge">{sourceTag('kpi_daily')}</span>
+      </div>
 
+      {/* 스키마 검증 결과(누락 컬럼 안내) */}
       {!check.ok && (
-        <ErrorBanner tone="warn" title="CSV 스키마 누락"
-          message={`필수 컬럼이 없습니다: ${check.missing.join(', ')}`} show />
+        <ErrorBanner
+          tone="warn"
+          title="CSV 스키마 누락"
+          message={`필수 컬럼이 없습니다: ${check.missing.join(', ')}`}
+          show
+        />
       )}
 
+      {/* KPI 그리드 */}
       <div className="kpi-grid">
         <KpiTile label="매출" value={fmt(revenue)} />
         <KpiTile label="ROAS" value={pct1(ROAS)} />
@@ -63,37 +75,45 @@ export default function ReportPage(){
         <KpiTile label="전월 순익(기준)" value={fmt(lastMonthProfit)} />
       </div>
 
-      {data.rows.length===0 ? (
+      {/* 표 섹션: VirtualTable + 표 전용 ExportBar */}
+      <h2 className="mb-2" style={{ marginTop: 16 }}>최근 지표 표</h2>
+      <ExportBar selector="#report-table" />  {/* ✅ 표만 내보내기 */}
+
+      {data.rows.length === 0 ? (
         <div className="skeleton" />
       ) : (
-        <div style={{marginTop:16}}>
-          <h2 className="mb-2">최근 지표 표</h2>
-          <Pager data={(data.rows as CsvRow[]).slice().reverse()} pageSize={50}
-            render={(page)=>(
-              <ScrollWrap>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>날짜</th><th>채널</th><th>방문</th><th>클릭</th>
-                      <th>주문</th><th>매출</th><th>광고비</th><th>반품</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {page.map((r,i)=>(
-                      <tr key={i}>
-                        <td>{String(r.date||'')}</td>
-                        <td>{String(r.channel||'')}</td>
-                        <td>{fmt(r.visits)}</td>
-                        <td>{fmt(r.clicks)}</td>
-                        <td>{fmt(r.orders)}</td>
-                        <td>{fmt(r.revenue)}</td>
-                        <td>{fmt(r.ad_cost)}</td>
-                        <td>{fmt(r.returns)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ScrollWrap>
+        <div id="report-table"> {/* ✅ 캡처 대상 래퍼 */}
+          <VirtualTable
+            className="table"
+            rows={(data.rows as CsvRow[]).slice(-500).reverse()} // 최근 500건 (최신 우선)
+            height={420}
+            rowHeight={40}
+            header={
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>채널</th>
+                  <th>방문</th>
+                  <th>클릭</th>
+                  <th>주문</th>
+                  <th>매출</th>
+                  <th>광고비</th>
+                  <th>반품</th>
+                </tr>
+              </thead>
+            }
+            rowKey={(r)=> `${String(r.date ?? '')}-${String(r.channel ?? '')}-${String(r.orders ?? '')}-${String(r.revenue ?? '')}`}
+            renderRow={(r: CsvRow) => (
+              <tr>
+                <td>{String(r.date ?? '')}</td>
+                <td>{String(r.channel ?? '')}</td>
+                <td>{fmt(r.visits)}</td>
+                <td>{fmt(r.clicks)}</td>
+                <td>{fmt(r.orders)}</td>
+                <td>{fmt(r.revenue)}</td>
+                <td>{fmt(r.ad_cost)}</td>
+                <td>{fmt(r.returns)}</td>
+              </tr>
             )}
           />
         </div>
