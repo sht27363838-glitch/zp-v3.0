@@ -2,20 +2,27 @@
 import React from 'react'
 import { readCsvLS } from '../_lib/readCsv'
 
-export default function DownloadCsv({keyName, label}:{
-  keyName: 'kpi_daily'|'ledger'|'settings'|string; label?: string
-}){
-  const onClick = ()=>{
-    const txt = readCsvLS(keyName) || ''
-    const blob = new Blob([txt], {type:'text/csv;charset=utf-8;'})
+export default function DownloadCsv({
+  keyName,
+  label = 'CSV 다운로드',
+}: {
+  keyName: string
+  label?: string
+}) {
+  const onClick = () => {
+    const raw = readCsvLS(keyName) || ''
+    const blob = new Blob([raw], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
+    a.href = url
     a.download = `${keyName}.csv`
-    document.body.appendChild(a); a.click(); a.remove()
+    a.click()
+    URL.revokeObjectURL(url)
   }
+
   return (
-    <button className="btn" onClick={onClick} disabled={!readCsvLS(keyName)}>
-      {label || `${keyName}.csv 다운로드`}
+    <button className="btn" onClick={onClick}>
+      {label}
     </button>
   )
 }
