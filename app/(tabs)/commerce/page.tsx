@@ -10,6 +10,8 @@ import ScrollWrap from '../../_components/ScrollWrap'
 
 type Row = Record<string, any>
 
+const [focus, setFocus] = useState<{ prod: string; ch: string } | null>(null);
+
 export default function Commerce(){
   // ✅ 데모 대체 로더
   const raw = readCsvOrDemo('kpi_daily')
@@ -176,5 +178,3 @@ export default function Commerce(){
     </div>
   )
 }
-
-function setFocus(_arg: any) { /* TS 만족용 stub — 실제로 위에서 useState 선언 시 함께 넣으셨다면 제거하세요 */ }
