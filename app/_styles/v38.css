@@ -1,0 +1,53 @@
+/* v3.8: 가독성/밀도/표 개선 공통 */
+
+:root{
+  /* 라이트 기준 */
+  --bg:#fafbfc; --panel:#ffffff; --panel-2:#f5f7fa;
+  --text:#101418; --muted:#667085;
+  --primary:#14B8A6; --danger:#EF4444; --warn:#F59E0B;
+  --ring:rgba(20,184,166,.35);
+  --radius:14px; --shadow:0 4px 14px rgba(16,24,40,.06);
+  --pad:16px; --gap:12px;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --panel:#0f141b; --panel-2:#0b1118;
+    --text:#ecf3fb; --muted:#9fb0c4;
+    --primary:#4fe3c1; --ring:rgba(79,227,193,.35);
+    --shadow:0 6px 22px rgba(0,0,0,.45);
+  }
+}
+
+/* 베이스 */
+html,body{background:var(--bg); color:var(--text);}
+.container{max-width:1180px; margin:0 auto; padding:24px 20px;}
+.page>h1{margin:8px 0 16px;}
+
+/* 카드 */
+.card{background:var(--panel); border:1px solid #E7EAEE22; border-radius:var(--radius); box-shadow:var(--shadow); padding:var(--pad);}
+.card .title{font-size:15.5px; font-weight:700; line-height:1.25;}
+.card .note{font-size:12.5px; font-weight:500; color:var(--muted);}
+
+/* KPI 그리드 */
+.kpi-grid{display:grid; gap:12px; grid-template-columns:repeat(3,minmax(0,1fr));}
+@media (max-width:980px){.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+/* 배지/버튼 */
+.badge{background:#EEF2F6; color:var(--text); border-radius:999px; padding:.25rem .55rem; font-size:12px;}
+.badge.warn{background:#FFF7E6;}
+.badge.danger{background:#FEECEC;}
+.btn{background:#E9EEF3; color:var(--text); border-radius:10px; padding:.5rem .8rem;}
+.btn.primary{background:var(--primary); color:#06251F; font-weight:700}
+
+/* 표 + sticky header */
+.table{width:100%; border-collapse:separate; border-spacing:0; background:var(--panel); color:var(--text); border-radius:12px; overflow:hidden; box-shadow:var(--shadow)}
+.table thead th{position:sticky; top:0; background:var(--panel-2); color:var(--text); text-align:left; padding:.55rem .75rem; z-index:1;}
+.table td{padding:.55rem .75rem; border-top:1px solid #00000010}
+
+/* 스크롤 컨테이너 유틸 */
+.scroll{max-height:480px; overflow:auto}
+
+/* 스켈레톤 */
+.skeleton{height:140px; border-radius:12px; background:linear-gradient(90deg, rgba(0,0,0,.04), rgba(0,0,0,.09), rgba(0,0,0,.04)); animation:s1 1.2s infinite linear; box-shadow:var(--shadow)}
+@keyframes s1{0%{background-position:-200px 0}100%{background-position:200px 0}}
