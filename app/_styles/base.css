@@ -87,5 +87,12 @@ h1,h2,h3,.value{color:var(--text-strong);}
 .table thead th{font-weight:700;}
 .badge{font-weight:700;}
 
+/* 경보 점 & 포커스 링(접근성) */
+.dot{position:absolute; translate:8px -8px; width:8px; height:8px; border-radius:999px; background:#94a3b8}
+.dot.danger{background:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.25)}
+.nav-item{position:relative}
+:where(button,a,.btn,.nav-link):focus-visible{outline:3px solid var(--primary); outline-offset:2px}
+
+
 
 
