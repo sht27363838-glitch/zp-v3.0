@@ -11,6 +11,7 @@ import ScrollWrap from '@cmp/ScrollWrap'
 import ErrorBanner from '@cmp/ErrorBanner'
 import Pager from '@cmp/Pager'
 import ExportBar from '@cmp/ExportBar'
+import VirtualTable from '../../_components/VirtualTable'
 
 const pct1 = (v:number)=> `${(v*100).toFixed(1)}%`
 
