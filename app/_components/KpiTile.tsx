@@ -39,6 +39,17 @@ export default function KpiTile({ label, value, note, onClick, tone }: Props) {
       onClick={onClick}
       aria-label={onClick ? `${label} 상세 열기` : undefined}
     >
+      <div
+  className="kpi-tile"
+  onClick={onClick}
+  role={onClick ? 'button' : undefined}
+  style={{
+    cursor: onClick ? 'pointer' : 'default',
+    minWidth: 220,               // ✅ 폭 고정
+    wordBreak:'keep-all'         // ✅ 줄바꿈 안정
+  }}
+>
+
       <div className="text-xs text-slate-500">{label}</div>
       <div className="mt-1 text-2xl font-semibold leading-tight">
         {value}
