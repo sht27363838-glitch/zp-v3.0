@@ -1,5 +1,6 @@
 'use client'
 
+import Pager from '../../_components/Pager'
 import React, { useMemo } from 'react'
 import { readCsvOrDemo, parseCsv, type CsvRow, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
@@ -49,32 +50,30 @@ export default function Growth() {
             message="kpi_daily.csv가 비어 있습니다. Tools에서 데모 업로드 후 확인하세요." />
         </>
       ) : (
-        <ScrollWrap>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>채널</th><th>방문</th><th>클릭</th><th>주문</th>
-                <th>매출</th><th>광고비</th><th>ROAS</th><th>CPA</th><th>CTR</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(r=>(
-                <tr key={r.channel}>
-                  <td>{r.channel}</td>
-                  <td>{fmt(r.visits)}</td>
-                  <td>{fmt(r.clicks)}</td>
-                  <td>{fmt(r.orders)}</td>
-                  <td>{fmt(r.revenue)}</td>
-                  <td>{fmt(r.spend)}</td>
-                  <td>{pct1(r.ROAS)}</td>
-                  <td>{fmt(r.CPA)}</td>
-                  <td>{pct1(r.CTR)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ScrollWrap>
-      )}
-    </div>
-  )
-}
+        <Pager data={rows} pageSize={50} render={(page)=>(
+  <ScrollWrap>
+    <table className="table">
+      <thead>
+        <tr>
+          <th>채널</th><th>방문</th><th>클릭</th><th>주문</th>
+          <th>매출</th><th>광고비</th><th>ROAS</th><th>CPA</th><th>CTR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {page.map((r)=>(
+          <tr key={r.channel}>
+            <td>{r.channel}</td>
+            <td>{fmt(r.visits)}</td>
+            <td>{fmt(r.clicks)}</td>
+            <td>{fmt(r.orders)}</td>
+            <td>{fmt(r.revenue)}</td>
+            <td>{fmt(r.spend)}</td>
+            <td>{pct1(r.ROAS)}</td>
+            <td>{fmt(r.CPA)}</td>
+            <td>{pct1(r.CTR)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </ScrollWrap>
+)}/>
