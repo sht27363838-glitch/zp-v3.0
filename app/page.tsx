@@ -1,4 +1,6 @@
 'use client'
+
+import { getHomeExplain } from './_lib/explain'
 import { sourceTag } from '@lib/csvSafe'
 import TrendBadge from './_components/TrendBadge'
 import InsightCard from './_components/InsightCard'
@@ -112,7 +114,7 @@ export default function Home(){
       </div>
 
       <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)', marginTop:12}}>
-        <InsightCard title="주간 매출 추이" note="최근 7일"
+        <InsightCard title="주간 매출 추이" note={getHomeExplain()} 
           series={last7.map(r=> Number(r.revenue||0))}/>
         <InsightCard title="광고효율 추이(ROAS)" note="최근 7일"
           series={last7.map(r=> (r.ad_cost? (r.revenue/(r.ad_cost||1)):0))}/>
@@ -120,7 +122,7 @@ export default function Home(){
 
       {/* 인사이트 카드(단일) – 유지 */}
       <div className="grid" style={{gridTemplateColumns:'1fr', gap:'var(--gap)', marginTop:12}}>
-        <InsightCard title="주간 매출 추이" note="최근 7일"
+        <InsightCard title="주간 매출 추이" note={getHomeExplain()} 
           series={last7.map(r=> Number(r.revenue||0))}
         />
       </div>
