@@ -1,41 +1,78 @@
+// app/_components/VirtualTable.tsx
 'use client'
-import React from 'react'
+
+import React, { useMemo, useRef, useState, useEffect } from 'react'
 
 type Props<T> = {
   rows: T[]
-  rowHeight?: number
-  threshold?: number // rows 개수 이 이상일 때 가상화
-  renderRow: (r:T, i:number)=> React.ReactNode
-  header: React.ReactNode
+  renderRow: (row: T, index: number) => React.ReactNode
+  header?: React.ReactNode
   className?: string
+  /** 뷰포트 높이(px). 기본 480 */
+  height?: number
+  /** 행 높이(px). 기본 40 */
+  rowHeight?: number
+  /** 화면 밖으로 여분으로 그릴 행 수. 기본 8 */
+  overscan?: number
+  /** 각 행의 key. 기본: index */
+  rowKey?: (row: T, index: number) => React.Key
 }
+
 export default function VirtualTable<T>({
-  rows, rowHeight=40, threshold=2000, renderRow, header, className
-}:Props<T>){
-  if(rows.length < threshold){
-    return (
-      <table className={className}>
-        {header}
-        <tbody>{rows.map(renderRow)}</tbody>
-      </table>
-    )
-  }
-  // 아주 단순 가상화: 뷰포트 기준 slice
-  const [scrollTop, setTop] = React.useState(0)
-  const ref = React.useRef<HTMLDivElement>(null)
-  const vh = 520
-  const start = Math.max(0, Math.floor(scrollTop/rowHeight) - 10)
-  const end   = Math.min(rows.length, Math.ceil((scrollTop+vh)/rowHeight)+10)
-  const padTop = start*rowHeight
-  const padBot = (rows.length-end)*rowHeight
+  rows,
+  renderRow,
+  header,
+  className,
+  height = 480,
+  rowHeight = 40,
+  overscan = 8,
+  rowKey,
+}: Props<T>) {
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const onScroll = () => setScrollTop(el.scrollTop)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const total = rows.length
+  const viewportCount = Math.max(1, Math.ceil(height / rowHeight))
+  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan)
+  const end = Math.min(total, start + viewportCount + overscan * 2)
+
+  const padTop = start * rowHeight
+  const padBottom = (total - end) * rowHeight
+  const slice = useMemo(() => rows.slice(start, end), [rows, start, end])
+
   return (
-    <div ref={ref} style={{maxHeight:vh, overflow:'auto'}} onScroll={e=>setTop((e.target as HTMLDivElement).scrollTop)}>
-      <table className={className}>{header}</table>
-      <div style={{height:padTop}}/>
-      <table className={className}><tbody>
-        {rows.slice(start,end).map((r,i)=> renderRow(r, start+i))}
-      </tbody></table>
-      <div style={{height:padBot}}/>
+    <div
+      ref={wrapRef}
+      style={{ maxHeight: height, overflow: 'auto', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)' }}
+    >
+      <table className={className || 'table'} style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+        {header}
+        <tbody>
+          {padTop > 0 && (
+            <tr aria-hidden>
+              <td style={{ height: padTop, padding: 0 }} />
+            </tr>
+          )}
+          {slice.map((row, i) => (
+            <tr key={rowKey ? rowKey(row, start + i) : start + i} style={{ height: rowHeight }}>
+              {renderRow(row, start + i)}
+            </tr>
+          ))}
+          {padBottom > 0 && (
+            <tr aria-hidden>
+              <td style={{ height: padBottom, padding: 0 }} />
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }
