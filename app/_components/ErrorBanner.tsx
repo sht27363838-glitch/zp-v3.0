@@ -1,21 +1,25 @@
 'use client'
 import React from 'react'
 
-export default function ErrorBanner(
-  { title='확인 필요', message, tone='warn' }:
-  { title?: string; message: string; tone?: 'warn'|'danger'|'info' }
-){
-  const bg = tone==='danger' ? 'rgba(255,107,107,.12)'
-           : tone==='info'   ? 'rgba(79,227,193,.12)'
-           : 'rgba(240,195,106,.12)'
-  const color = tone==='danger' ? '#b3261e' : tone==='info' ? '#0b5' : '#8a6d3b'
+export default function ErrorBanner({
+  tone='danger',
+  title='문제가 발생했습니다',
+  message='잠시 후 다시 시도해 주세요.',
+  show=false,
+}:{
+  tone?: 'danger'|'warn'|'info'
+  title?: string
+  message?: string
+  show?: boolean
+}) {
+  if(!show) return null
+  const toneBg = tone==='danger' ? '#FEE2E2' : tone==='warn' ? '#FEF3C7' : '#E0F2FE'
+  const toneTx = '#111'
   return (
-    <div style={{
-      background:bg, border:`1px solid ${color}33`, color,
-      padding:'10px 12px', borderRadius:'12px', margin:'12px 0'
-    }}>
-      <b style={{marginRight:8}}>{title}</b>
-      <span style={{opacity:.9}}>{message}</span>
+    <div style={{background:toneBg, color:toneTx, border:'1px solid #00000010',
+      borderRadius:12, padding:'10px 12px', margin:'8px 0'}}>
+      <b style={{marginRight:6}}>{title}</b>
+      <span style={{opacity:.95}}>{message}</span>
     </div>
   )
 }
