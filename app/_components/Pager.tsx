@@ -1,29 +1,31 @@
-// app/_components/Pager.tsx
 'use client'
 import React, {useMemo, useState} from 'react'
 
 export default function Pager<T>({
-  data, pageSize = 50, render
-}:{ data:T[]; pageSize?:number; render:(page:T[])=>React.ReactNode }){
-  const [p,setP] = useState(1)
-  const pages = Math.max(1, Math.ceil(data.length / pageSize))
-  const page = useMemo(()=>{
-    const s = (p-1)*pageSize
-    return data.slice(s, s+pageSize)
-  },[data, p, pageSize])
-
-  if(!data.length) return null
+  data, pageSize=50, render,
+}:{
+  data: T[]
+  pageSize?: number
+  render: (page: T[], meta:{page:number; pages:number; total:number; setPage:(n:number)=>void}) => React.ReactNode
+}) {
+  const [page, setPage] = useState(1)
+  const pages = Math.max(1, Math.ceil((data?.length||0) / pageSize))
+  const safePage = Math.min(Math.max(1,page), pages)
+  const slice = useMemo(()=>{
+    const s = (safePage-1)*pageSize
+    return (data||[]).slice(s, s+pageSize)
+  },[data, pageSize, safePage])
 
   return (
-    <div>
-      {render(page)}
+    <>
+      {render(slice, {page:safePage, pages, total:data?.length||0, setPage})}
       {pages>1 && (
-        <div className="row" style={{gap:8, marginTop:8, alignItems:'center'}}>
-          <button className="btn" onClick={()=>setP(Math.max(1,p-1))} disabled={p===1}>이전</button>
-          <span className="muted">{p} / {pages}</span>
-          <button className="btn" onClick={()=>setP(Math.max(1,Math.min(pages,p+1)))} disabled={p===pages}>다음</button>
+        <div className="row" style={{gap:8, marginTop:8, display:'flex', alignItems:'center'}}>
+          <button className="btn" onClick={()=>setPage(p=>Math.max(1,p-1))}>이전</button>
+          <span className="badge">{safePage} / {pages}</span>
+          <button className="btn" onClick={()=>setPage(p=>Math.min(pages,p+1))}>다음</button>
         </div>
       )}
-    </div>
+    </>
   )
 }
