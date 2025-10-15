@@ -1,6 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
+import Pager from '../../_components/Pager' 
 import React, { useMemo, useState } from 'react'   // ← useMemo, useState 추가/정리
 import { readCsvLS, parseCsv } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
@@ -118,29 +119,31 @@ export default function RewardsPage() {
         {data.rows.length === 0 ? (
           <div className="skeleton" />
         ) : (
-          <ScrollWrap>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>날짜</th><th>미션</th><th>종류</th><th>Stable</th><th>Edge</th><th>메모</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data.rows as any[]).slice(-50).reverse().map((r:any, i:number)=>(
-                  <tr key={i}>
-                    <td>{r.date}</td>
-                    <td>{r.mission}</td>
-                    <td>{r.type}</td>
-                    <td>{fmt(num(r.stable))}</td>
-                    <td>{fmt(num(r.edge))}</td>
-                    <td>{r.note||''}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollWrap>
-        )}
-      </div>
-    </div>
-  )
+          <Pager data={rows} pageSize={50} render={(page)=>(
+  <ScrollWrap>
+    <table className="table">
+      <thead>
+        <tr>
+          <th>채널</th><th>방문</th><th>클릭</th><th>주문</th>
+          <th>매출</th><th>광고비</th><th>ROAS</th><th>CPA</th><th>CTR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {page.map((r)=>(
+          <tr key={r.channel}>
+            <td>{r.channel}</td>
+            <td>{fmt(r.visits)}</td>
+            <td>{fmt(r.clicks)}</td>
+            <td>{fmt(r.orders)}</td>
+            <td>{fmt(r.revenue)}</td>
+            <td>{fmt(r.spend)}</td>
+            <td>{pct1(r.ROAS)}</td>
+            <td>{fmt(r.CPA)}</td>
+            <td>{pct1(r.CTR)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </ScrollWrap>
+)}/>
 }
