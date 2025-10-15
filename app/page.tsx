@@ -81,6 +81,13 @@ const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'retur
   {/* 나머지 타일은 필요 시 동일 패턴으로 */}
 </div>
 
+      <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)', marginTop:12}}>
+  <InsightCard title="주간 매출 추이" note="최근 7일"
+    series={last7.map(r=> Number(r.revenue||0))}/>
+  <InsightCard title="광고효율 추이(ROAS)" note="최근 7일"
+    series={last7.map(r=> (r.ad_cost? (r.revenue/(r.ad_cost||1)):0))}/>
+</div>
+
       {/* 인사이트 카드 */}
       <div className="grid" style={{gridTemplateColumns:'1fr', gap:'var(--gap)', marginTop:12}}>
         <InsightCard title="주간 매출 추이" note="최근 7일"
