@@ -11,6 +11,7 @@ import { computeKpiRows, summarize, lastNDays, series } from './_lib/kpi'
 import KpiTile from './_components/KpiTile'
 import Modal from './_components/Modal'
 import Spark from './_components/Spark'
+import ExportBar from '@cmp/ExportBar'
 
 export default function Home(){
   // ✅ 데모 대체 로더 사용
@@ -72,6 +73,8 @@ export default function Home(){
         <h2>지휘소</h2>
         <span className="badge">{sourceTag('kpi_daily')}</span>
       </div>
+
+      <ExportBar selector=".kpi-grid" />
 
       {/* ✅ 첫 번째 KPI 그리드: '매출' 타일에 월 목표 대비 % 배지 추가 */}
       <div className="grid">
