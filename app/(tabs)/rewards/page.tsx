@@ -1,6 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
+import { sourceTag } from '@lib/csvSafe'
 import React, { useMemo, useState } from 'react'
 import { readCsvLS, parseCsv } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
@@ -72,7 +73,11 @@ export default function RewardsPage() {
 
   return (
     <div className="pad">
-      <h2 className="title">C4 — 보상 엔진</h2>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
+  <h2 className="title">C4 — 보상 엔진</h2>
+  <span className="badge">{sourceTag('ledger')}</span>
+</div>
+
 
       <div className="row gap">
         <div className="card">
