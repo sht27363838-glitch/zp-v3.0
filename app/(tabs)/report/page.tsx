@@ -1,5 +1,6 @@
 'use client'
 
+import Pager from '../../_components/Pager'
 import React, { useMemo } from 'react'
 import { readCsvOrDemo, parseCsv, type CsvRow } from '../../_lib/readCsv'
 import { num, fmt } from '../../_lib/num'
@@ -56,32 +57,33 @@ export default function ReportPage() {
       ) : (
         <div style={{ marginTop: 16 }}>
           <h2 className="mb-2">최근 지표 표</h2>
-          <ScrollWrap>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>날짜</th><th>채널</th><th>방문</th><th>클릭</th>
-                  <th>주문</th><th>매출</th><th>광고비</th><th>반품</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data.rows as CsvRow[]).slice(-20).reverse().map((r, i) => (
-                  <tr key={i}>
-                    <td>{String(r.date ?? '')}</td>
-                    <td>{String(r.channel ?? '')}</td>
-                    <td>{fmt(r.visits)}</td>
-                    <td>{fmt(r.clicks)}</td>
-                    <td>{fmt(r.orders)}</td>
-                    <td>{fmt(r.revenue)}</td>
-                    <td>{fmt(r.ad_cost)}</td>
-                    <td>{fmt(r.returns)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollWrap>
-        </div>
-      )}
+         <Pager data={rows} pageSize={50} render={(page)=>(
+  <ScrollWrap>
+    <table className="table">
+      <thead>
+        <tr>
+          <th>채널</th><th>방문</th><th>클릭</th><th>주문</th>
+          <th>매출</th><th>광고비</th><th>ROAS</th><th>CPA</th><th>CTR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {page.map((r)=>(
+          <tr key={r.channel}>
+            <td>{r.channel}</td>
+            <td>{fmt(r.visits)}</td>
+            <td>{fmt(r.clicks)}</td>
+            <td>{fmt(r.orders)}</td>
+            <td>{fmt(r.revenue)}</td>
+            <td>{fmt(r.spend)}</td>
+            <td>{pct1(r.ROAS)}</td>
+            <td>{fmt(r.CPA)}</td>
+            <td>{pct1(r.CTR)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </ScrollWrap>
+)}/>
 
       <div style={{ marginTop: 16, opacity: 0.8 }}>
         <p className="text-sm">
