@@ -31,3 +31,11 @@ export function validate(key: keyof typeof REQUIRED, table: CsvTable){
 
 // 안전 숫자 변환
 export const n = (v:any)=> Number(v||0) || 0
+
+export function injectDemo(key:'kpi_daily'|'ledger'){
+  if(typeof window==='undefined') return
+  const demo = key==='kpi_daily'? DEMO_KPI_DAILY : DEMO_LEDGER
+  localStorage.setItem(key, demo.trim())
+  location.reload()
+}
+
