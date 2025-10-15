@@ -1,4 +1,6 @@
 'use client'
+
+import { sourceTag } from '@lib/csvSafe'
 import React, { useMemo, useState, useDeferredValue } from 'react'
 import { readCsvOrDemo } from '@lib/csvSafe'
 import { parseCsv, type CsvTable } from '@lib/readCsv'
@@ -63,7 +65,11 @@ export default function Commerce(){
 
   return (
     <div className="page">
-      <h1>C2 — 전환/커머스 레이더</h1>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
+  <h1>C2 — 전환/커머스 레이더</h1>
+  <span className="badge">{sourceTag('kpi_daily')}</span>
+</div>
+
 
       <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)'}}>
         <div className="card">
