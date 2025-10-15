@@ -4,7 +4,7 @@
 :root {
   --bg: #0e1116;          /* 다크 기본 */
   --panel: #161a22;
-  --text: #ecf3fb;        /* 다크 텍스트 */
+  --text:#101418;       /* 다크 텍스트 */
   --muted: #9fb2c8;
   --primary: #4fe3c1;
   --ring: rgba(79,227,193,.35);
