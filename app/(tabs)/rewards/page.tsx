@@ -7,6 +7,7 @@ import { num, fmt } from '../../_lib/num'
 import { loadRules, evalGuards } from '../../_lib/rules'
 import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
 import ScrollWrap from '../../_components/ScrollWrap'
+import DownloadCsv from '../../_components/DownloadCsv'
 
 export default function RewardsPage() {
   const raw = readCsvLS('ledger') || ''
