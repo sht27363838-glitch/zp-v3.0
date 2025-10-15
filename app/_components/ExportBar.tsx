@@ -1,6 +1,9 @@
 'use client'
+
 import React from 'react'
 import { toCsv } from '@lib/readCsv'
+import ExportBar from '@cmp/ExportBar'  // == app/_components/ExportBar
+
 
 export default function ExportBar({selector, csv}:{selector:string; csv?: {headers:string[], rows:any[]}}){
   async function capture(){
