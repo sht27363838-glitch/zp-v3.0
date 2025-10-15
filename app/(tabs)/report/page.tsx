@@ -10,6 +10,7 @@ import KpiTile from '@cmp/KpiTile'
 import ScrollWrap from '@cmp/ScrollWrap'
 import ErrorBanner from '@cmp/ErrorBanner'
 import Pager from '@cmp/Pager'
+import ExportBar from '@cmp/ExportBar'
 
 const pct1 = (v:number)=> `${(v*100).toFixed(1)}%`
 
@@ -43,6 +44,7 @@ export default function ReportPage(){
     <div className="page">
       <div style={{display:'flex', alignItems:'center', gap:8}}>
   <h1>지휘소(C0) — 요약</h1>
+        <ExportBar selector=".kpi-grid" />  
   <span className="badge">{sourceTag('kpi_daily')}</span>
 </div>
 
