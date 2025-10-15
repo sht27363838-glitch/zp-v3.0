@@ -1,4 +1,6 @@
 'use client'
+
+import { sourceTag } from '@lib/csvSafe'
 import React, {useMemo} from 'react'
 import { readCsvOrDemo } from '@lib/csvSafe'
 import { parseCsv, type CsvRow } from '@lib/readCsv'
@@ -39,7 +41,10 @@ export default function ReportPage(){
 
   return (
     <div className="page">
-      <h1>지휘소(C0) — 요약</h1>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
+  <h1>지휘소(C0) — 요약</h1>
+  <span className="badge">{sourceTag('kpi_daily')}</span>
+</div>
 
       {!check.ok && (
         <ErrorBanner tone="warn" title="CSV 스키마 누락"
