@@ -3,7 +3,7 @@ import { sourceTag } from '@lib/csvSafe'
 import TrendBadge from './_components/TrendBadge'
 import InsightCard from './_components/InsightCard'
 import React, {useMemo, useState} from 'react'
-import { readCsvOrDemo } from './_lib/readCsv'
+import { readCsvOrDemo, parseCsv } from './_lib/readCsv' // ✅ parseCsv 추가
 import { fmt, pct } from './_lib/num'
 import { computeKpiRows, summarize, lastNDays, series } from './_lib/kpi'
 import KpiTile from './_components/KpiTile'
@@ -24,6 +24,24 @@ export default function Home(){
     return s
   },[capRaw])
 
+  // ✅ 월 목표 읽기(settings.csv에 month_goal 있으면 사용)
+  const sraw = readCsvOrDemo('settings')
+  const monthGoal = useMemo(()=>{
+    if(!sraw) return 0
+    try {
+      const { rows } = parseCsv(sraw)
+      return Number((rows?.[0] as any)?.month_goal || 0) || 0
+    } catch { return 0 }
+  }, [sraw])
+
+  // ✅ 이번 달 매출 합계 + 진행률 계산
+  const ym = new Date().toISOString().slice(0,7) // YYYY-MM
+  const thisMonthRevenue = useMemo(()=> rows
+    .filter(r => String(r.date||'').startsWith(ym))
+    .reduce((s,r)=> s + Number(r.revenue||0), 0)
+  , [rows, ym])
+  const progress = monthGoal > 0 ? Math.min(1, thisMonthRevenue / monthGoal) : null
+
   const [open,setOpen] = useState(false)
   const [topic,setTopic] = useState<'revenue'|'roas'|'cr'|'aov'|'returns'|'reward'>('revenue')
   const openDrill = (t: typeof topic)=>{ setTopic(t); setOpen(true) }
@@ -32,9 +50,9 @@ export default function Home(){
   const last30 = lastNDays(rows, 30)
 
   // 지난 7일 & 그 직전 7일 합계
-const prev7  = lastNDays(rows, 14).slice(0, 7)
-const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'returns') =>
-  arr.reduce((s, r) => s + Number((r as any)[key] || 0), 0)
+  const prev7  = lastNDays(rows, 14).slice(0, 7)
+  const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'returns') =>
+    arr.reduce((s, r) => s + Number((r as any)[key] || 0), 0)
 
   const mapMetric = (t: typeof topic, xr: typeof rows)=>{
     if(t==='revenue') return series(xr, 'revenue')
@@ -48,12 +66,19 @@ const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'retur
 
   return (
     <div className="page">
-     <div style={{display:'flex', alignItems:'center', gap:8}}>
-  <h2>지휘소</h2>
-  <span className="badge">{sourceTag('kpi_daily')}</span>
-</div>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
+        <h2>지휘소</h2>
+        <span className="badge">{sourceTag('kpi_daily')}</span>
+      </div>
+
+      {/* ✅ 첫 번째 KPI 그리드: '매출' 타일에 월 목표 대비 % 배지 추가 */}
       <div className="grid">
-        <KpiTile label="매출"   value={fmt(sumAll.total.revenue)} onClick={()=>openDrill('revenue')}/>
+        <KpiTile
+          label="매출"
+          value={fmt(sumAll.total.revenue)}
+          right={progress!=null ? <span className="badge">{(progress*100).toFixed(0)}%</span> : undefined}
+          onClick={()=>openDrill('revenue')}
+        />
         <KpiTile label="ROAS"   value={(sumAll.ROAS||0).toFixed(2)} onClick={()=>openDrill('roas')}/>
         <KpiTile label="CR"     value={pct(sumAll.CR||0)} onClick={()=>openDrill('cr')}/>
         <KpiTile label="AOV"    value={fmt(sumAll.AOV||0)} onClick={()=>openDrill('aov')}/>
@@ -61,38 +86,39 @@ const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'retur
         <KpiTile label="보상총액" value={fmt(capAmt)} note="(ledger 합계)" onClick={()=>openDrill('reward')}/>
       </div>
 
+      {/* 두 번째 KPI 그리드(트렌드 배지)는 기존대로 유지 */}
       <div className="grid">
-  <KpiTile
-    label="매출"
-    value={fmt(sumAll.total.revenue)}
-    right={<TrendBadge now={sum(last7,'revenue')} prev={sum(prev7,'revenue')} />}
-    onClick={()=>openDrill('revenue')}
-  />
-  <KpiTile
-    label="ROAS"
-    value={(sumAll.ROAS||0).toFixed(2)}
-    right={<TrendBadge now={sum(last7,'revenue')/(sum(last7,'ad_cost')||1)}
-                       prev={sum(prev7,'revenue')/(sum(prev7,'ad_cost')||1)} />}
-    onClick={()=>openDrill('roas')}
-  />
-  <KpiTile
-    label="반품률"
-    value={pct(sumAll.ReturnsRate||0)}
-    right={<TrendBadge invert now={(sum(last7,'returns')/(sum(last7,'orders')||1))}
-                       prev={(sum(prev7,'returns')/(sum(prev7,'orders')||1))} />}
-    onClick={()=>openDrill('returns')}
-  />
-  {/* 나머지 타일은 필요 시 동일 패턴으로 */}
-</div>
+        <KpiTile
+          label="매출"
+          value={fmt(sumAll.total.revenue)}
+          right={<TrendBadge now={sum(last7,'revenue')} prev={sum(prev7,'revenue')} />}
+          onClick={()=>openDrill('revenue')}
+        />
+        <KpiTile
+          label="ROAS"
+          value={(sumAll.ROAS||0).toFixed(2)}
+          right={<TrendBadge now={sum(last7,'revenue')/(sum(last7,'ad_cost')||1)}
+                             prev={sum(prev7,'revenue')/(sum(prev7,'ad_cost')||1)} />}
+          onClick={()=>openDrill('roas')}
+        />
+        <KpiTile
+          label="반품률"
+          value={pct(sumAll.ReturnsRate||0)}
+          right={<TrendBadge invert now={(sum(last7,'returns')/(sum(last7,'orders')||1))}
+                             prev={(sum(prev7,'returns')/(sum(prev7,'orders')||1))} />}
+          onClick={()=>openDrill('returns')}
+        />
+        {/* 나머지 타일은 필요 시 동일 패턴으로 */}
+      </div>
 
       <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)', marginTop:12}}>
-  <InsightCard title="주간 매출 추이" note="최근 7일"
-    series={last7.map(r=> Number(r.revenue||0))}/>
-  <InsightCard title="광고효율 추이(ROAS)" note="최근 7일"
-    series={last7.map(r=> (r.ad_cost? (r.revenue/(r.ad_cost||1)):0))}/>
-</div>
+        <InsightCard title="주간 매출 추이" note="최근 7일"
+          series={last7.map(r=> Number(r.revenue||0))}/>
+        <InsightCard title="광고효율 추이(ROAS)" note="최근 7일"
+          series={last7.map(r=> (r.ad_cost? (r.revenue/(r.ad_cost||1)):0))}/>
+      </div>
 
-      {/* 인사이트 카드 */}
+      {/* 인사이트 카드(단일) – 유지 */}
       <div className="grid" style={{gridTemplateColumns:'1fr', gap:'var(--gap)', marginTop:12}}>
         <InsightCard title="주간 매출 추이" note="최근 7일"
           series={last7.map(r=> Number(r.revenue||0))}
