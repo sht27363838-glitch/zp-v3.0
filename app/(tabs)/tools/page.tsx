@@ -1,6 +1,7 @@
 // app/(tabs)/tools/page.tsx
 'use client'
 
+import { injectDemo } from '../../_lib/readCsv'
 import React from 'react'
 import dynamic from 'next/dynamic'
 
