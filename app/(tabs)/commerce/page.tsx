@@ -8,6 +8,7 @@ import { num, fmt, pct } from '@lib/num'
 import CohortSpark from '@cmp/CohortSpark'
 import LtvCurve from '@cmp/LtvCurve'
 import useIdle from '@lib/useIdle'
+import ExportBar from '@cmp/ExportBar'
 
 type Row = Record<string, any>
 
@@ -67,10 +68,11 @@ export default function Commerce(){
     <div className="page">
       <div style={{display:'flex', alignItems:'center', gap:8}}>
   <h1>C2 — 전환/커머스 레이더</h1>
+        <ExportBar selector="#commerce-cards" />
   <span className="badge">{sourceTag('kpi_daily')}</span>
 </div>
 
-
+<div id="commerce-cards">  
       <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)'}}>
         <div className="card">
           <div className="row" style={{justifyContent:'space-between', marginBottom:8, display:'flex'}}>
