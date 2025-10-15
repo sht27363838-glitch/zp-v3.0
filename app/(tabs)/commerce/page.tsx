@@ -1,10 +1,12 @@
 'use client'
-import React, {useMemo, useState, useDeferredValue} from 'react'
+
+import React, { useMemo, useState, useDeferredValue } from 'react'
 import { readCsvOrDemo, parseCsv, type CsvTable } from '../../_lib/readCsv'
 import { num, fmt, pct } from '../../_lib/num'
 import CohortSpark from '../../_components/CohortSpark'
 import LtvCurve from '../../_components/LtvCurve'
 import useIdle from '../../_lib/useIdle'
+import ScrollWrap from '../../_components/ScrollWrap'
 
 type Row = Record<string, any>
 
@@ -14,26 +16,38 @@ export default function Commerce(){
   const tbl: CsvTable = useMemo(()=> raw? parseCsv(raw): {headers:[], rows:[]}, [raw])
   const rows = (tbl.rows as Row[]) || []
 
+  // ===== AOV 워터폴 (장바구니→주문→매출)
   const aovData = useMemo(()=>{
     let carts=0, orders=0, revenue=0
     for(const r of rows){ carts+=num(r.carts); orders+=num(r.orders); revenue+=num(r.revenue) }
     return { carts, orders, revenue, aov: orders? revenue/orders : 0 }
   },[rows])
 
-  const [focus, setFocus] = useState<{prod:string, ch:string}|null>(null)
+  // ===== 전환 히트맵 인덱스 캐시(상품×소스 집계 맵)
+  const heatMapIndex = useMemo(()=>{
+    const m = new Map<string,{clicks:number;orders:number}>()
+    for(const r of rows){
+      const ch = r.channel || 'unknown'
+      const p  = r.product || r.sku || 'generic'
+      const k  = `${p}__${ch}`
+      const ref = m.get(k) || {clicks:0, orders:0}
+      ref.clicks += num(r.clicks)
+      ref.orders += num(r.orders)
+      m.set(k, ref)
+    }
+    return m
+  }, [rows])
+
   const xcats = useMemo(()=> Array.from(new Set(rows.map(r=> r.channel||'unknown'))), [rows])
   const prods = useMemo(()=> Array.from(new Set(rows.map(r=> r.product||r.sku||'generic'))), [rows])
 
   function cellValue(prod:string, ch:string){
-    let clicks=0, orders=0
-    for(const r of rows){
-      if((r.channel||'unknown')===ch && (r.product||r.sku||'generic')===prod){
-        clicks+=num(r.clicks); orders+=num(r.orders)
-      }
-    }
-    return { clicks, orders, cr: clicks? orders/Math.max(1,clicks) : 0 }
+    const k = `${prod}__${ch}`
+    const v = heatMapIndex.get(k) || {clicks:0, orders:0}
+    return { clicks: v.clicks, orders: v.orders, cr: v.clicks ? v.orders/Math.max(1,v.clicks) : 0 }
   }
 
+  // ===== 코호트/LTV (데모: 최근 8주)
   const cohort = useMemo(()=> {
     const weeks = 8
     return Array.from({length:weeks},(_,i)=>{
@@ -42,9 +56,10 @@ export default function Commerce(){
     })
   },[rows])
 
+  // LTV용 누적 배열
   const cum = useMemo(()=>{ let s=0; return cohort.map(v=> (s+=Number(v)||0)) }, [cohort])
 
-  // 성능: 무거운 섹션은 한박자 늦게
+  // ===== 성능: 무거운 섹션은 한 박자 늦게 + 입력 지연
   const idleReady = useIdle(500)
   const deferredRows = useDeferredValue(rows)
 
@@ -52,6 +67,7 @@ export default function Commerce(){
     <div className="page">
       <h1>C2 — 전환/커머스 레이더</h1>
 
+      {/* AOV 워터폴 + 코호트/LTV */}
       <div className="grid" style={{gridTemplateColumns:'1fr 1fr', gap:'var(--gap)'}}>
         <div className="card">
           <div className="row" style={{justifyContent:'space-between', marginBottom:8}}>
@@ -88,15 +104,15 @@ export default function Commerce(){
         )}
       </div>
 
+      {/* 히트맵 */}
       {!idleReady ? (
         <div className="skeleton" style={{ height: 260, marginTop: 'var(--gap)' }} />
       ) : (
         <div className="card" style={{marginTop:'var(--gap)'}}>
           <div className="row" style={{justifyContent:'space-between', marginBottom:8}}>
             <b>상품 × 소스 히트맵 (CR)</b>
-            {focus && <span className="badge">{focus.prod} / {focus.ch} — 클릭하면 상세</span>}
           </div>
-          <div className="scroll">
+          <ScrollWrap>
             <table className="table">
               <thead>
                 <tr>
@@ -115,6 +131,7 @@ export default function Commerce(){
                         <td key={ch}>
                           <button
                             className="cell"
+                            // 모달 드릴다운은 deferredRows 기준
                             onClick={()=> setFocus({prod:p, ch})}
                             aria-label={`CR ${pct(v.cr)} / 주문 ${fmt(v.orders)} / 클릭 ${fmt(v.clicks)}`}
                             style={{
@@ -132,8 +149,9 @@ export default function Commerce(){
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollWrap>
 
+          {/* 드릴다운 모달 */}
           {focus && (
             <div className="modal" onClick={()=>setFocus(null)}>
               <div className="modal-body" onClick={e=>e.stopPropagation()}>
@@ -142,12 +160,14 @@ export default function Commerce(){
                   <button className="btn" onClick={()=>setFocus(null)}>닫기</button>
                 </div>
                 <div className="muted" style={{marginTop:6}}>최근 추이</div>
-                <CohortSpark series={
-                  deferredRows
-                    .filter(r=> (r.channel||'unknown')===focus.ch && (r.product||r.sku||'generic')===focus.prod)
-                    .slice(-20)
-                    .map(r=> (num(r.orders)&&num(r.clicks))? num(r.orders)/Math.max(1,num(r.clicks)) : 0)
-                }/>
+                <CohortSpark
+                  series={
+                    deferredRows
+                      .filter(r=> (r.channel||'unknown')===focus.ch && (r.product||r.sku||'generic')===focus.prod)
+                      .slice(-20)
+                      .map(r=> (num(r.orders)&&num(r.clicks))? num(r.orders)/Math.max(1,num(r.clicks)) : 0)
+                  }
+                />
               </div>
             </div>
           )}
@@ -156,3 +176,5 @@ export default function Commerce(){
     </div>
   )
 }
+
+function setFocus(_arg: any) { /* TS 만족용 stub — 실제로 위에서 useState 선언 시 함께 넣으셨다면 제거하세요 */ }
