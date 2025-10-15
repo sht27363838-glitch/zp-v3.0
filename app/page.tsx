@@ -1,4 +1,5 @@
 'use client'
+import { sourceTag } from '@lib/csvSafe'
 import TrendBadge from './_components/TrendBadge'
 import InsightCard from './_components/InsightCard'
 import React, {useMemo, useState} from 'react'
@@ -47,7 +48,10 @@ const sum = (arr: typeof rows, key: 'revenue'|'orders'|'visits'|'ad_cost'|'retur
 
   return (
     <div className="page">
-      <h2>지휘소</h2>
+     <div style={{display:'flex', alignItems:'center', gap:8}}>
+  <h2>지휘소</h2>
+  <span className="badge">{sourceTag('kpi_daily')}</span>
+</div>
       <div className="grid">
         <KpiTile label="매출"   value={fmt(sumAll.total.revenue)} onClick={()=>openDrill('revenue')}/>
         <KpiTile label="ROAS"   value={(sumAll.ROAS||0).toFixed(2)} onClick={()=>openDrill('roas')}/>
