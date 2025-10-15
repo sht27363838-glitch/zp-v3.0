@@ -1,28 +1,26 @@
 'use client'
 import Link from 'next/link'
-import React, {useMemo} from 'react'
-import { getAlertFlags } from '@lib/guards'
+import { usePathname } from 'next/navigation'
 
-export default function Nav(){
-  const flags = useMemo(()=> getAlertFlags(), [])
-  const dangerOn = flags.roasLow || flags.crDrop || flags.returnsSpike
+const tabs = [
+  { href: '/', label: '지휘소' },
+  { href: '/growth', label: '유입' },
+  { href: '/commerce', label: '전환' },
+  { href: '/rewards', label: '보상' },
+  { href: '/report', label: '리포트' },
+  { href: '/tools', label: '도구' },
+]
 
-  const Tab = ({href, children}:{href:string;children:React.ReactNode})=>(
-    <li className="nav-item">
-      <Link href={href} className="nav-link">{children}</Link>
-      {href==='/report' && dangerOn && <span className="dot danger" aria-label="경보"/>}
-    </li>
-  )
-
+export default function Nav() {
+  const path = usePathname()
   return (
     <nav className="nav">
-      <ul className="nav-list">
-        <Tab href="/">지휘소</Tab>
-        <Tab href="/growth">유입</Tab>
-        <Tab href="/commerce">전환</Tab>
-        <Tab href="/report">리포트</Tab>
-        <Tab href="/rewards">보상</Tab>
-        <Tab href="/tools">도구</Tab>
+      <ul>
+        {tabs.map(t => (
+          <li key={t.href} className={path === t.href ? 'active' : ''}>
+            <Link href={t.href}>{t.label}</Link>
+          </li>
+        ))}
       </ul>
     </nav>
   )
