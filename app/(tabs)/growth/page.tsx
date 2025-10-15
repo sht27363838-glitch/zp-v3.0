@@ -6,7 +6,7 @@ import { readCsvOrDemo } from '@lib/csvSafe'
 import { parseCsv, type CsvRow, type CsvTable } from '@lib/readCsv'
 import { validate } from '@lib/csvSafe'
 import { num, fmt, pct } from '@lib/num'
-import ScrollWrap from '@cmp/ScrollWrap'
+import VirtualTable from '../../_components/VirtualTable'
 import ErrorBanner from '@cmp/ErrorBanner'
 import Pager from '@cmp/Pager'
 
@@ -52,31 +52,29 @@ export default function Growth(){
         <div className="skeleton" />
       ) : (
         <Pager data={rows} pageSize={50} render={(page)=>(
-          <ScrollWrap>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>채널</th><th>방문</th><th>클릭</th><th>주문</th>
-                  <th>매출</th><th>광고비</th><th>ROAS</th><th>CPA</th><th>CTR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {page.map(r=>(
-                  <tr key={r.channel}>
-                    <td>{r.channel}</td>
-                    <td>{fmt(r.visits)}</td>
-                    <td>{fmt(r.clicks)}</td>
-                    <td>{fmt(r.orders)}</td>
-                    <td>{fmt(r.revenue)}</td>
-                    <td>{fmt(r.spend)}</td>
-                    <td>{pct1(r.ROAS)}</td>
-                    <td>{fmt(r.CPA)}</td>
-                    <td>{pct1(r.CTR)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollWrap>
+          <VirtualTable
+  rows={rows}
+  className="table"
+  header={
+    <thead>
+      <tr>
+        <th>채널</th><th>방문</th><th>클릭</th><th>주문</th>
+        <th>매출</th><th>광고비</th><th>ROAS</th><th>CPA</th><th>CTR</th>
+      </tr>
+    </thead>
+  }
+  renderRow={(r)=>(
+    <tr key={r.channel}>
+      <td>{r.channel}</td>
+      <td>{fmt(r.visits)}</td>
+      <td>{fmt(r.clicks)}</td>
+      <td>{fmt(r.orders)}</td>
+      <td>{fmt(r.revenue)}</td>
+      <td>{fmt(r.spend)}</td>
+      <td>{pct1(r.ROAS)}</td>
+      <td>{fmt(r.CPA)}</td>
+      <td>{pct1(r.CTR)}</td>
+    </tr>
         )}/>
       )}
     </div>
