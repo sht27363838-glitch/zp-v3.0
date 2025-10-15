@@ -100,6 +100,10 @@ export default function RewardsPage() {
         {guards.adFatigue && <span className="badge warn">엣지 잠금</span>}
         {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
       </div>
+      <div className="row" style={{gap:8, margin:'8px 0'}}>
+  <DownloadCsv keyName="ledger" label="ledger.csv 다운로드"/>
+</div>
+
 
       <div className="mt-6">
         <div className="text-dim text-sm">※ 최근 50건</div>
