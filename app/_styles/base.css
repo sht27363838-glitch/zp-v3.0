@@ -75,4 +75,17 @@ h1,h2,h3 { color: var(--text); }
 .kpi-tile .right .badge { font-weight: 700; }
 .kpi-tile .label { font-weight: 600; }
 
+:root{
+  --text-strong:#0b0f14;
+  --text:#11151a;
+  --muted:#5a6b7d;
+}
+body{color:var(--text);}
+h1,h2,h3,.value{color:var(--text-strong);}
+.kpi-tile .label{font-weight:600;}
+.kpi-tile .value{font-weight:800; letter-spacing:-0.2px;}
+.table thead th{font-weight:700;}
+.badge{font-weight:700;}
+
+
 
