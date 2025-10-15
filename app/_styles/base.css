@@ -95,18 +95,33 @@ body{
 }
 
 /* 테이블 */
-.table{ width: 100%; border-collapse: separate; border-spacing: 0; }
+/* === Table baseline === */
+.table{
+  width:100%;
+  table-layout:fixed;          /* 열폭 고정(스크롤 안정) */
+  border-collapse:separate;
+  border-spacing:0;
+}
 .table thead th{
-  position: sticky; top: 0; z-index: 1;
-  background: color-mix(in oklab, var(--panel) 92%, black);
-  border-bottom: var(--border);
+  position:sticky; top:0;
+  z-index:1;
+  background:var(--panel);
+  white-space:nowrap;          /* 헤더 줄바꿈 금지 → 세로깨짐 방지 */
+  font-weight:600;
 }
 .table th, .table td{
-  padding: .55rem .8rem;
-  text-align: left; white-space: nowrap;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding:0.55rem 0.8rem;      /* 패딩 통일 */
+  vertical-align:middle;
+  overflow:hidden;             /* 긴 텍스트 넘침 숨김 */
+  text-overflow:ellipsis;
 }
-.table tbody tr:hover{ background: rgba(255,255,255,.04); }
+.table td.num, .table th.num{  /* 숫자열 공통 우측정렬 */
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.table col.min { width:96px; } /* 날짜/채널 등 최소폭 프리셋 */
+.table col.wide{ width:140px; }
+
 
 /* 스켈레톤/스크롤 */
 .skeleton{ height: 160px; border-radius: var(--radius); background: rgba(255,255,255,.06); }
