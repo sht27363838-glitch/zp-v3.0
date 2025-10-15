@@ -1,4 +1,6 @@
 'use client'
+
+import { sourceTag } from '@lib/csvSafe'
 import React from 'react'
 import dynamic from 'next/dynamic'
 import ErrorBanner from '@cmp/ErrorBanner'
@@ -9,7 +11,12 @@ const CsvWizard = dynamic(() => import('@cmp/CsvWizard'), { ssr:false })
 export default function ToolsPage(){
   return (
     <div className="container page">
-      <h1>도구</h1>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
+  <h1>도구</h1>
+  <span className="badge">KPI: {sourceTag('kpi_daily')}</span>
+  <span className="badge">Ledger: {sourceTag('ledger')}</span>
+</div>
+
 
       <ErrorBanner tone="info" title="데이터 소스 안내"
         message="아래 버튼으로 데모 데이터를 즉시 주입/초기화할 수 있습니다." show />
