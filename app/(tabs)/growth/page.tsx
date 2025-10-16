@@ -71,20 +71,21 @@ export default function Growth() {
           <VirtualTable
             className="table"
             rows={rows}
-            // height/rowHeight는 컴포넌트 API에 없을 수 있으니 제거(빌드 에러 방지)
+            height={420}
+            rowHeight={40}
             header={
               <>
-                {/* 열 폭 고정: 숫자열은 넓게 */}
+                {/* ✅ 열 폭 고정 */}
                 <colgroup>
-                  <col className="min" />   {/* 채널 */}
-                  <col />                   {/* 방문 */}
-                  <col />                   {/* 클릭 */}
-                  <col />                   {/* 주문 */}
-                  <col className="wide" />  {/* 매출 */}
-                  <col className="wide" />  {/* 광고비 */}
-                  <col />                   {/* ROAS */}
-                  <col className="wide" />  {/* CPA */}
-                  <col />                   {/* CTR */}
+                  <col className="wide" />   {/* 채널 */}
+                  <col className="min" />    {/* 방문 */}
+                  <col className="min" />    {/* 클릭 */}
+                  <col className="min" />    {/* 주문 */}
+                  <col className="wide" />   {/* 매출 */}
+                  <col className="wide" />   {/* 광고비 */}
+                  <col className="min" />    {/* ROAS */}
+                  <col className="min" />    {/* CPA */}
+                  <col className="min" />    {/* CTR */}
                 </colgroup>
                 <thead>
                   <tr>
