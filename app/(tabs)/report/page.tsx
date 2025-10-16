@@ -25,7 +25,6 @@ function readLastMonthProfit(): number {
 }
 
 export default function ReportPage() {
-  // ✅ 데모/로컬 자동 대체
   const raw = readCsvOrDemo('kpi_daily')
   const data = useMemo(() => parseCsv(raw), [raw])
   const check = validate('kpi_daily', data)
@@ -53,14 +52,12 @@ export default function ReportPage() {
 
   return (
     <div className="page">
-      {/* 제목 + 전체 KPI 캡처용 ExportBar + 데이터 소스 배지 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h1>지휘소(C0) — 요약</h1>
         <ExportBar selector=".kpi-grid" />
         <span className="badge">{sourceTag('kpi_daily')}</span>
       </div>
 
-      {/* 스키마 검증 결과(누락 컬럼 안내) */}
       {!check.ok && (
         <ErrorBanner
           tone="warn"
@@ -70,7 +67,6 @@ export default function ReportPage() {
         />
       )}
 
-      {/* KPI 그리드 */}
       <div className="kpi-grid">
         <KpiTile label="매출" value={fmt(revenue)} />
         <KpiTile label="ROAS" value={pct1(ROAS)} />
@@ -80,11 +76,10 @@ export default function ReportPage() {
         <KpiTile label="전월 순익(기준)" value={fmt(lastMonthProfit)} />
       </div>
 
-      {/* 표 섹션: VirtualTable + 표 전용 ExportBar */}
       <h2 className="mb-2" style={{ marginTop: 16 }}>
         최근 지표 표
       </h2>
-      <ExportBar selector="#report-table" /> {/* ✅ 표만 내보내기 */}
+      <ExportBar selector="#report-table" />
 
       {data.rows.length === 0 ? (
         <div className="skeleton" />
@@ -92,20 +87,21 @@ export default function ReportPage() {
         <div id="report-table">
           <VirtualTable
             className="table"
-            rows={(data.rows as CsvRow[]).slice(-500).reverse()} // 최근 500건 (최신 우선)
-            // height/rowHeight 제거(컴포넌트 API 차이로 빌드 에러 방지)
+            rows={(data.rows as CsvRow[]).slice(-500).reverse()}
+            height={420}
+            rowHeight={40}
             header={
               <>
-                {/* 🔒 열 폭/정렬 고정 */}
+                {/* ✅ 열 폭 고정 */}
                 <colgroup>
-                  <col className="min" />   {/* 날짜 */}
-                  <col className="min" />   {/* 채널 */}
-                  <col />                   {/* 방문 */}
-                  <col />                   {/* 클릭 */}
-                  <col />                   {/* 주문 */}
-                  <col className="wide" />  {/* 매출 */}
-                  <col className="wide" />  {/* 광고비 */}
-                  <col />                   {/* 반품 */}
+                  <col className="min" />    {/* 날짜 */}
+                  <col className="wide" />   {/* 채널 */}
+                  <col className="min" />    {/* 방문 */}
+                  <col className="min" />    {/* 클릭 */}
+                  <col className="min" />    {/* 주문 */}
+                  <col className="wide" />   {/* 매출 */}
+                  <col className="wide" />   {/* 광고비 */}
+                  <col className="min" />    {/* 반품 */}
                 </colgroup>
                 <thead>
                   <tr>
