@@ -1,4 +1,3 @@
-// app/(tabs)/report/page.tsx
 'use client'
 
 import React, { useMemo } from 'react'
@@ -10,7 +9,7 @@ import ErrorBanner from '@cmp/ErrorBanner'
 import ExportBar from '@cmp/ExportBar'
 import VirtualTable from '@cmp/VirtualTable'
 
-const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
+const pct1 = (v:number)=> `${(v*100).toFixed(1)}%`
 
 function readLastMonthProfit(): number {
   const raw = readCsvOrDemo('settings') || ''
@@ -18,53 +17,36 @@ function readLastMonthProfit(): number {
   try {
     const rows = parseCsv(raw).rows as any[]
     const p = Number(rows?.[0]?.last_month_profit ?? 0)
-    return isFinite(p) && p > 0 ? p : 1_000_000
-  } catch {
-    return 1_000_000
-  }
+    return isFinite(p)&&p>0 ? p : 1_000_000
+  } catch { return 1_000_000 }
 }
 
-export default function ReportPage() {
-  const raw = readCsvOrDemo('kpi_daily')
-  const data = useMemo(() => parseCsv(raw), [raw])
+export default function ReportPage(){
+  const raw  = readCsvOrDemo('kpi_daily')
+  const data = useMemo(()=> parseCsv(raw), [raw])
   const check = validate('kpi_daily', data)
 
-  // 합계
-  let visits = 0,
-    clicks = 0,
-    orders = 0,
-    revenue = 0,
-    adCost = 0,
-    returns = 0
-  for (const r of data.rows as CsvRow[]) {
-    visits += num(r.visits)
-    clicks += num(r.clicks)
-    orders += num(r.orders)
-    revenue += num(r.revenue)
-    adCost += num(r.ad_cost)
-    returns += num(r.returns)
+  let visits=0, clicks=0, orders=0, revenue=0, adCost=0, returns=0
+  for(const r of data.rows as CsvRow[]){
+    visits+=num(r.visits); clicks+=num(r.clicks); orders+=num(r.orders)
+    revenue+=num(r.revenue); adCost+=num(r.ad_cost); returns+=num(r.returns)
   }
-  const ROAS = adCost ? revenue / adCost : 0
-  const CR = visits ? orders / visits : 0
-  const AOV = orders ? revenue / orders : 0
-  const returnsRate = orders ? returns / orders : 0
+  const ROAS = adCost? revenue/adCost : 0
+  const CR   = visits? orders/visits : 0
+  const AOV  = orders? revenue/orders : 0
+  const returnsRate = orders? returns/orders : 0
   const lastMonthProfit = readLastMonthProfit()
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
         <h1>지휘소(C0) — 요약</h1>
         <ExportBar selector=".kpi-grid" />
         <span className="badge">{sourceTag('kpi_daily')}</span>
       </div>
 
       {!check.ok && (
-        <ErrorBanner
-          tone="warn"
-          title="CSV 스키마 누락"
-          message={`필수 컬럼이 없습니다: ${check.missing.join(', ')}`}
-          show
-        />
+        <ErrorBanner tone="warn" title="CSV 스키마 누락" message={`필수 컬럼이 없습니다: ${check.missing.join(', ')}`} show />
       )}
 
       <div className="kpi-grid">
@@ -76,12 +58,10 @@ export default function ReportPage() {
         <KpiTile label="전월 순익(기준)" value={fmt(lastMonthProfit)} />
       </div>
 
-      <h2 className="mb-2" style={{ marginTop: 16 }}>
-        최근 지표 표
-      </h2>
+      <h2 className="mb-2" style={{ marginTop:16 }}>최근 지표 표</h2>
       <ExportBar selector="#report-table" />
 
-      {data.rows.length === 0 ? (
+      {data.rows.length===0 ? (
         <div className="skeleton" />
       ) : (
         <div id="report-table">
@@ -92,16 +72,13 @@ export default function ReportPage() {
             rowHeight={40}
             header={
               <>
-                {/* ✅ 열 폭 고정 */}
                 <colgroup>
-                  <col className="min" />    {/* 날짜 */}
-                  <col className="wide" />   {/* 채널 */}
-                  <col className="min" />    {/* 방문 */}
-                  <col className="min" />    {/* 클릭 */}
-                  <col className="min" />    {/* 주문 */}
-                  <col className="wide" />   {/* 매출 */}
-                  <col className="wide" />   {/* 광고비 */}
-                  <col className="min" />    {/* 반품 */}
+                  <col className="min" />   {/* 날짜 */}
+                  <col className="min" />   {/* 채널 */}
+                  <col /> <col /> <col />   {/* 방문/클릭/주문 */}
+                  <col className="wide" />  {/* 매출 */}
+                  <col className="wide" />  {/* 광고비 */}
+                  <col />                   {/* 반품 */}
                 </colgroup>
                 <thead>
                   <tr>
@@ -117,15 +94,11 @@ export default function ReportPage() {
                 </thead>
               </>
             }
-            rowKey={(r) =>
-              `${String(r.date ?? '')}-${String(r.channel ?? '')}-${String(r.orders ?? '')}-${String(
-                r.revenue ?? ''
-              )}`
-            }
-            renderRow={(r: CsvRow) => (
+            rowKey={(r)=> `${String(r.date??'')}-${String(r.channel??'')}-${String(r.orders??'')}-${String(r.revenue??'')}`}
+            renderRow={(r:CsvRow)=>(
               <tr>
-                <td>{String(r.date ?? '')}</td>
-                <td>{String(r.channel ?? '')}</td>
+                <td>{String(r.date||'')}</td>
+                <td>{String(r.channel||'')}</td>
                 <td className="num">{fmt(r.visits)}</td>
                 <td className="num">{fmt(r.clicks)}</td>
                 <td className="num">{fmt(r.orders)}</td>
@@ -138,10 +111,8 @@ export default function ReportPage() {
         </div>
       )}
 
-      <div style={{ marginTop: 16, opacity: 0.8 }}>
-        <p className="text-sm">
-          데이터 원본: <code>kpi_daily.csv</code>
-        </p>
+      <div style={{marginTop:16, opacity:.8}}>
+        <p className="text-sm">데이터 원본: <code>kpi_daily.csv</code></p>
       </div>
     </div>
   )
