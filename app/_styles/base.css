@@ -108,7 +108,7 @@ button, input, select, textarea{ color: inherit; }
   border-collapse: separate;
   border-spacing: 0;
 }
-.table thead th{ position: sticky; top: 0; background: var(--panel);
+.table thead th {
   position: sticky; top: 0;
   z-index: 1;
   background: var(--panel);
@@ -121,7 +121,7 @@ button, input, select, textarea{ color: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.table td.num, .table th.num{ text-align:right; font-variant-numeric:tabular-nums;
+.table td.num, .table th.num{
   text-align: right;            /* ✅ 숫자 우측정렬 */
   font-variant-numeric: tabular-nums;
 }
