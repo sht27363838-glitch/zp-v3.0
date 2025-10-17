@@ -18,83 +18,61 @@ export default function Growth() {
   for (const r of data.rows as CsvRow[]) {
     const ch = (r.channel as string) || 'unknown'
     const o = (by[ch] ||= { channel: ch, visits: 0, clicks: 0, spend: 0, orders: 0, revenue: 0 })
-    o.visits += num(r.visits)
-    o.clicks += num(r.clicks)
-    o.spend  += num(r.ad_cost)
-    o.orders += num(r.orders)
-    o.revenue+= num(r.revenue)
+    o.visits  += num(r.visits)
+    o.clicks  += num(r.clicks)
+    o.spend   += num(r.ad_cost)
+    o.orders  += num(r.orders)
+    o.revenue += num(r.revenue)
   }
 
   const rows = Object.values(by)
-    .map(o=>{
-      const ROAS = o.spend ? o.revenue/o.spend : 0
-      const CPA  = o.orders ? o.spend/o.orders : 0
-      const CTR  = o.visits ? o.clicks/o.visits : 0
-      return {...o, ROAS, CPA, CTR}
+    .map(o => {
+      const ROAS = o.spend ? o.revenue / o.spend : 0
+      const CPA  = o.orders ? o.spend / o.orders : 0
+      const CTR  = o.visits ? o.clicks / o.visits : 0
+      return { ...o, ROAS, CPA, CTR }
     })
-    .sort((a,b)=> b.ROAS - a.ROAS)
+    .sort((a, b) => b.ROAS - a.ROAS)
 
-  const pct1 = (v:number)=> pct(v,1)
+  const pct1 = (v: number) => pct(v, 1)
 
   return (
     <div className="page">
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h1>채널 리그(ROAS/CPA/CTR)</h1>
         <ExportBar selector="#growth-table" />
       </div>
 
       {!check.ok && (
-        <ErrorBanner tone="warn" title="CSV 스키마 누락" message={`필수 컬럼이 없습니다: ${check.missing.join(', ')}`} show />
+        <ErrorBanner
+          tone="warn"
+          title="CSV 스키마 누락"
+          message={`필수 컬럼이 없습니다: ${check.missing.join(', ')}`}
+          show
+        />
       )}
 
       {rows.length === 0 ? (
         <div className="skeleton" />
       ) : (
-        <div id="growth-table" style={{ marginTop:12 }}>
+        <div id="growth-table" style={{ marginTop: 12 }}>
           <VirtualTable
             className="table"
             rows={rows}
             height={420}
             rowHeight={40}
-            header={
-              <>
-                {/* 열폭 & 정렬 고정 */}
-                <colgroup>
-                  <col className="min" />        {/* 채널 */}
-                  <col /> <col /> <col />        {/* 방문/클릭/주문 */}
-                  <col className="wide" />       {/* 매출 */}
-                  <col className="wide" />       {/* 광고비 */}
-                  <col /> <col /> <col />        {/* ROAS/CPA/CTR */}
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>채널</th>
-                    <th className="num">방문</th>
-                    <th className="num">클릭</th>
-                    <th className="num">주문</th>
-                    <th className="num">매출</th>
-                    <th className="num">광고비</th>
-                    <th className="num">ROAS</th>
-                    <th className="num">CPA</th>
-                    <th className="num">CTR</th>
-                  </tr>
-                </thead>
-              </>
-            }
-            rowKey={(r)=> r.channel}
-            renderRow={(r)=>(
-              <tr>
-                <td>{r.channel}</td>
-                <td className="num">{fmt(r.visits)}</td>
-                <td className="num">{fmt(r.clicks)}</td>
-                <td className="num">{fmt(r.orders)}</td>
-                <td className="num">{fmt(r.revenue)}</td>
-                <td className="num">{fmt(r.spend)}</td>
-                <td className="num">{pct1(r.ROAS)}</td>
-                <td className="num">{fmt(r.CPA)}</td>
-                <td className="num">{pct1(r.CTR)}</td>
-              </tr>
-            )}
+            rowKey={(r) => (r as any).channel}
+            columns={[
+              { key: 'channel', header: '채널', width: 140 },
+              { key: 'visits',  header: '방문', className: 'num', width: 110, render: r => fmt((r as any).visits) },
+              { key: 'clicks',  header: '클릭', className: 'num', width: 110, render: r => fmt((r as any).clicks) },
+              { key: 'orders',  header: '주문', className: 'num', width: 110, render: r => fmt((r as any).orders) },
+              { key: 'revenue', header: '매출', className: 'num', width: 130, render: r => fmt((r as any).revenue) },
+              { key: 'spend',   header: '광고비', className: 'num', width: 130, render: r => fmt((r as any).spend) },
+              { key: 'ROAS',    header: 'ROAS', className: 'num', width: 110, render: r => pct1((r as any).ROAS) },
+              { key: 'CPA',     header: 'CPA',  className: 'num', width: 130, render: r => fmt((r as any).CPA) },
+              { key: 'CTR',     header: 'CTR',  className: 'num', width: 110, render: r => pct1((r as any).CTR) },
+            ]}
           />
         </div>
       )}
