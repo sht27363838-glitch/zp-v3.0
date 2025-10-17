@@ -13,6 +13,7 @@ import InsightCard from './_components/InsightCard'
 import Modal from './_components/Modal'
 import Spark from './_components/Spark'
 import ExportBar from '@cmp/ExportBar'
+import SettingsModal from './_components/SettingsModal'   // ✅ 추가
 
 export default function Home() {
   // 데이터 로드
@@ -61,10 +62,10 @@ export default function Home() {
   const [topic, setTopic] = useState<
     'revenue' | 'roas' | 'cr' | 'aov' | 'returns' | 'reward'
   >('revenue')
-  const openDrill = (t: typeof topic) => {
-    setTopic(t)
-    setOpen(true)
-  }
+  const openDrill = (t: typeof topic) => { setTopic(t); setOpen(true) }
+
+  // ✅ 설정 모달 상태
+  const [showSettings, setShowSettings] = useState(false)
 
   // 기간 시리즈
   const last7 = lastNDays(rows, 7)
@@ -81,17 +82,17 @@ export default function Home() {
     if (t === 'reward') return []
     if (t === 'aov') return xr.map((r) => (r.orders ? r.revenue / r.orders : 0))
     if (t === 'cr') return xr.map((r) => (r.visits ? r.orders / r.visits : 0))
-    if (t === 'roas')
-      return xr.map((r) => (r.ad_cost ? r.revenue / (r.ad_cost || 1) : 0))
+    if (t === 'roas') return xr.map((r) => (r.ad_cost ? r.revenue / (r.ad_cost || 1) : 0))
     return []
   }
 
   return (
     <div className="page">
-      {/* 제목 + DEMO/LIVE 배지 */}
+      {/* 제목 + DEMO/LIVE 배지 + 설정 버튼 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h2>지휘소</h2>
         <span className="badge">{sourceTag('kpi_daily')}</span>
+        <button className="btn" onClick={()=>setShowSettings(true)}>설정</button> {/* ✅ */}
       </div>
 
       {/* KPI 그리드만 캡처/인쇄 대상으로 지정 */}
@@ -102,11 +103,7 @@ export default function Home() {
         <KpiTile
           label="매출"
           value={fmt(sumAll.total.revenue)}
-          right={
-            progress != null ? (
-              <span className="badge">{(progress * 100).toFixed(0)}%</span>
-            ) : undefined
-          }
+          right={progress!=null ? <span className="badge">{(progress*100).toFixed(0)}%</span> : undefined}
           onClick={() => openDrill('revenue')}
         />
         <KpiTile
@@ -120,16 +117,8 @@ export default function Home() {
           }
           onClick={() => openDrill('roas')}
         />
-        <KpiTile
-          label="전환율"
-          value={pct(sumAll.CR || 0)}
-          onClick={() => openDrill('cr')}
-        />
-        <KpiTile
-          label="AOV"
-          value={fmt(sumAll.AOV || 0)}
-          onClick={() => openDrill('aov')}
-        />
+        <KpiTile label="전환율" value={pct(sumAll.CR || 0)} onClick={() => openDrill('cr')} />
+        <KpiTile label="AOV" value={fmt(sumAll.AOV || 0)} onClick={() => openDrill('aov')} />
         <KpiTile
           label="반품률"
           value={pct(sumAll.ReturnsRate || 0)}
@@ -142,19 +131,11 @@ export default function Home() {
           }
           onClick={() => openDrill('returns')}
         />
-        <KpiTile
-          label="보상총액"
-          value={fmt(capAmt)}
-          note="(ledger 합계)"
-          onClick={() => openDrill('reward')}
-        />
+        <KpiTile label="보상총액" value={fmt(capAmt)} note="(ledger 합계)" onClick={() => openDrill('reward')} />
       </div>
 
       {/* 인사이트 카드: 2칸 그리드 */}
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--gap)', marginTop: 12 }}
-      >
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--gap)', marginTop: 12 }}>
         <InsightCard
           title="주간 매출 추이"
           note={getHomeExplain()}
@@ -176,6 +157,9 @@ export default function Home() {
           <Spark series={mapMetric(topic, last30)} width={520} height={100} />
         </div>
       </Modal>
+
+      {/* ✅ 설정 모달 */}
+      <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)} />
 
       <style jsx>{`
         .kpi-grid {
