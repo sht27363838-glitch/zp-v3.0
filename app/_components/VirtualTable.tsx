@@ -1,78 +1,62 @@
-// app/_components/VirtualTable.tsx
 'use client'
+import React from 'react'
 
-import React, { useMemo, useRef, useState, useEffect } from 'react'
+type Column<T> = {
+  key: keyof T | string
+  header: React.ReactNode
+  width?: number | string             // 예) 96, '120px', '12ch'
+  className?: string                  // 'num' 주면 우측정렬
+  render?: (row: T) => React.ReactNode
+}
 
 type Props<T> = {
   rows: T[]
-  renderRow: (row: T, index: number) => React.ReactNode
-  header?: React.ReactNode
+  columns: Column<T>[]
+  rowKey: (row: T, idx: number) => React.Key
   className?: string
-  /** 뷰포트 높이(px). 기본 480 */
-  height?: number
-  /** 행 높이(px). 기본 40 */
-  rowHeight?: number
-  /** 화면 밖으로 여분으로 그릴 행 수. 기본 8 */
-  overscan?: number
-  /** 각 행의 key. 기본: index */
-  rowKey?: (row: T, index: number) => React.Key
+  height?: number                     // 스크롤 높이
+  rowHeight?: number                  // (옵션) 보기 좋게 일정 높이
 }
 
 export default function VirtualTable<T>({
-  rows,
-  renderRow,
-  header,
-  className,
-  height = 480,
-  rowHeight = 40,
-  overscan = 8,
-  rowKey,
+  rows, columns, rowKey, className='table', height = 420, rowHeight = 40,
 }: Props<T>) {
-  const wrapRef = useRef<HTMLDivElement | null>(null)
-  const [scrollTop, setScrollTop] = useState(0)
-
-  useEffect(() => {
-    const el = wrapRef.current
-    if (!el) return
-    const onScroll = () => setScrollTop(el.scrollTop)
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const total = rows.length
-  const viewportCount = Math.max(1, Math.ceil(height / rowHeight))
-  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan)
-  const end = Math.min(total, start + viewportCount + overscan * 2)
-
-  const padTop = start * rowHeight
-  const padBottom = (total - end) * rowHeight
-  const slice = useMemo(() => rows.slice(start, end), [rows, start, end])
 
   return (
-    <div
-      ref={wrapRef}
-      style={{ maxHeight: height, overflow: 'auto', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)' }}
-    >
-      <table className={className || 'table'} style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
-        {header}
-        <tbody>
-          {padTop > 0 && (
-            <tr aria-hidden>
-              <td style={{ height: padTop, padding: 0 }} />
+    <div className="card" style={{padding:0}}>
+      <div className="scroll" style={{maxHeight: height, overflow:'auto'}}>
+        <table className={className} style={{width:'100%'}}>
+          {/* 1) 헤더/바디 열폭을 ‘완전히’ 일치시키는 colgroup */}
+          <colgroup>
+            {columns.map((c, i) => (
+              <col key={i} style={c.width ? { width: typeof c.width==='number' ? `${c.width}px` : c.width } : undefined}/>
+            ))}
+          </colgroup>
+
+          <thead>
+            <tr>
+              {columns.map((c, i) => (
+                <th key={i} className={c.className || undefined}>{c.header}</th>
+              ))}
             </tr>
-          )}
-          {slice.map((row, i) => (
-            <tr key={rowKey ? rowKey(row, start + i) : start + i} style={{ height: rowHeight }}>
-              {renderRow(row, start + i)}
-            </tr>
-          ))}
-          {padBottom > 0 && (
-            <tr aria-hidden>
-              <td style={{ height: padBottom, padding: 0 }} />
-            </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {rows.map((r, idx) => (
+              <tr key={rowKey(r, idx)} style={{height: rowHeight}}>
+                {columns.map((c, i) => {
+                  const content = c.render ? c.render(r) : (r as any)[c.key as string]
+                  return (
+                    <td key={i} className={c.className || undefined}>
+                      {content}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
