@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import ThemeToggle from './ThemeToggle'
 
 const tabs = [
   { href: '/', label: '지휘소' },
@@ -19,6 +20,7 @@ export default function Nav() {
         {tabs.map(t => (
           <li key={t.href} className={path === t.href ? 'active' : ''}>
             <Link href={t.href}>{t.label}</Link>
+            <li style={{marginLeft:'auto'}}><ThemeToggle />
           </li>
         ))}
       </ul>
