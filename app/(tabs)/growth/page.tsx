@@ -1,3 +1,4 @@
+// app/(tabs)/growth/page.tsx
 'use client'
 
 import React, { useMemo } from 'react'
@@ -63,15 +64,15 @@ export default function Growth() {
             rowHeight={40}
             rowKey={(r) => (r as any).channel}
             columns={[
-              { key: 'channel', header: '채널', width: 140 },
-              { key: 'visits',  header: '방문', className: 'num', width: 110, render: r => fmt((r as any).visits) },
-              { key: 'clicks',  header: '클릭', className: 'num', width: 110, render: r => fmt((r as any).clicks) },
-              { key: 'orders',  header: '주문', className: 'num', width: 110, render: r => fmt((r as any).orders) },
-              { key: 'revenue', header: '매출', className: 'num', width: 130, render: r => fmt((r as any).revenue) },
-              { key: 'spend',   header: '광고비', className: 'num', width: 130, render: r => fmt((r as any).spend) },
-              { key: 'ROAS',    header: 'ROAS', className: 'num', width: 110, render: r => pct1((r as any).ROAS) },
-              { key: 'CPA',     header: 'CPA',  className: 'num', width: 130, render: r => fmt((r as any).CPA) },
-              { key: 'CTR',     header: 'CTR',  className: 'num', width: 110, render: r => pct1((r as any).CTR) },
+              { key: 'channel', header: '채널',   width: 140,                        sortable: true },
+              { key: 'visits',  header: '방문',   width: 110, className: 'num',      sortable: true, render: r => fmt((r as any).visits) },
+              { key: 'clicks',  header: '클릭',   width: 110, className: 'num',      sortable: true, render: r => fmt((r as any).clicks) },
+              { key: 'orders',  header: '주문',   width: 110, className: 'num',      sortable: true, render: r => fmt((r as any).orders) },
+              { key: 'revenue', header: '매출',   width: 130, className: 'num',      sortable: true, render: r => fmt((r as any).revenue) },
+              { key: 'spend',   header: '광고비', width: 130, className: 'num',      sortable: true, render: r => fmt((r as any).spend) },
+              { key: 'ROAS',    header: 'ROAS',   width: 110, className: 'num',      sortable: true, render: r => pct1((r as any).ROAS) },
+              { key: 'CPA',     header: 'CPA',    width: 130, className: 'num',      sortable: true, render: r => fmt((r as any).CPA) },
+              { key: 'CTR',     header: 'CTR',    width: 110, className: 'num',      sortable: true, render: r => pct1((r as any).CTR) },
             ]}
           />
         </div>
