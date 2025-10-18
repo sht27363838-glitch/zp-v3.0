@@ -116,11 +116,13 @@ export function injectDemo(key:'kpi_daily'|'ledger'|'settings'){
   localStorage.setItem(`${key}.__ts`, String(Date.now()))
   location.reload()
 }
-export function resetDemo(keys: Array<'kpi_daily'|'ledger'|'settings'> = ['kpi_daily','ledger','settings']){
+export function resetDemo(keys: Array<'kpi_daily'|'ledger'|'settings'>) {
   if (typeof window === 'undefined') return
-  for(const k of keys){ clearCsvLS(k) }
-  location.reload()
-}
+  for (const k of keys) {
+    localStorage.removeItem(k)
+    localStorage.removeItem(`${k}.__ts`)
+  }
+  location.reloa
 export function clearToLive(
   keys: Array<'kpi_daily'|'ledger'|'settings'> = ['kpi_daily','ledger','settings']
 ){
