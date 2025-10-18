@@ -4,14 +4,16 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+// app/_components/Nav.tsx (일부)
 const tabs = [
-  { href: '/',        label: '지휘소' },
-  { href: '/growth',  label: '유입' },
-  { href: '/convert', label: '전환' },
-  { href: '/rewards', label: '보상' },
-  { href: '/report',  label: '리포트' },
-  { href: '/tools',   label: '도구' },
+  { label: '지휘소', href: '/' },
+  { label: '유입',   href: '/growth' },
+  { label: '전환',   href: '/commerce' },  
+  { label: '보상',   href: '/rewards' },
+  { label: '리포트', href: '/report' },
+  { label: '도구',   href: '/tools' },
 ]
+
 
 export default function Nav() {
   const path = usePathname()
