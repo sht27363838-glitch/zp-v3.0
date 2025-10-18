@@ -4,7 +4,7 @@ import { sourceTag } from '@lib/csvSafe'
 import React from 'react'
 import dynamic from 'next/dynamic'
 import ErrorBanner from '@cmp/ErrorBanner'
-import { injectDemo, clearToLive } from '@lib/csvSafe'
+import { injectDemo, resetDemo } from '@lib/csvSafe'
 
 const CsvWizard = dynamic(() => import('@cmp/CsvWizard'), { ssr:false })
 
@@ -24,10 +24,11 @@ export default function ToolsPage(){
      <div className="row" style={{gap:8, margin:'8px 0'}}>
   <button className="btn" onClick={()=>injectDemo('kpi_daily')}>데모 KPI 주입</button>
   <button className="btn" onClick={()=>injectDemo('ledger')}>데모 Ledger 주입</button>
+
+  {/* ✅ LIVE 초기화: 배열로 전달 */}
   <button className="btn" onClick={()=>resetDemo(['kpi_daily'])}>KPI 초기화(LIVE)</button>
   <button className="btn" onClick={()=>resetDemo(['ledger'])}>Ledger 초기화(LIVE)</button>
 </div>
-
       <div className="card" style={{marginTop:12}}>
         <div className="title">CSV 관리</div>
         <div className="note" style={{marginBottom:8}}>업로드/다운로드</div>
