@@ -117,7 +117,7 @@ export default function ReportPage(){
 
       {/* ===== 필터 바 ===== */}
       <div className="card" style={{display:'flex', flexWrap:'wrap', gap:8, alignItems:'center', marginBottom:10}}>
-        <div className="row" style={{gap:6}}>
+        <div className="row" style={{gap:6, flexWrap:'wrap'}}>
           <input
             value={query}
             onChange={e=>setQuery(e.target.value)}
@@ -140,7 +140,7 @@ export default function ReportPage(){
         </div>
 
         {/* 채널 토글 */}
-        <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+        <div style={{display:'flex', gap:6, flexWrap:'wrap', alignItems:'center'}}>
           {channels.map(ch=>{
             const on = sel.has(ch)
             return (
@@ -178,14 +178,14 @@ export default function ReportPage(){
             rowHeight={40}
             rowKey={(r, i)=> `${String(r.date ?? '')}-${String(r.channel ?? '')}-${i}`}
             columns={[
-              { key: 'date',    header: '날짜',  width: 120, render: r => String(r.date ?? '') },
-              { key: 'channel', header: '채널',  width: 140, render: r => String(r.channel ?? '') },
-              { key: 'visits',  header: '방문',  className:'num', width: 110, render: r => fmt(r.visits) },
-              { key: 'clicks',  header: '클릭',  className:'num', width: 110, render: r => fmt(r.clicks) },
-              { key: 'orders',  header: '주문',  className:'num', width: 110, render: r => fmt(r.orders) },
-              { key: 'revenue', header: '매출',  className:'num', width: 130, render: r => fmt(r.revenue) },
-              { key: 'ad_cost', header: '광고비', className:'num', width: 130, render: r => fmt(r.ad_cost) },
-              { key: 'returns', header: '반품',  className:'num', width: 110, render: r => fmt(r.returns) },
+              { key: 'date',    header: '날짜',   width: 120,                            sortable: true, render: r => String(r.date ?? '') },
+              { key: 'channel', header: '채널',   width: 140,                            sortable: true, render: r => String(r.channel ?? '') },
+              { key: 'visits',  header: '방문',   width: 110, className:'num',           sortable: true, render: r => fmt(r.visits) },
+              { key: 'clicks',  header: '클릭',   width: 110, className:'num',           sortable: true, render: r => fmt(r.clicks) },
+              { key: 'orders',  header: '주문',   width: 110, className:'num',           sortable: true, render: r => fmt(r.orders) },
+              { key: 'revenue', header: '매출',   width: 130, className:'num',           sortable: true, render: r => fmt(r.revenue) },
+              { key: 'ad_cost', header: '광고비', width: 130, className:'num',           sortable: true, render: r => fmt(r.ad_cost) },
+              { key: 'returns', header: '반품',   width: 110, className:'num',           sortable: true, render: r => fmt(r.returns) },
             ]}
           />
         </div>
