@@ -121,6 +121,11 @@ export function resetDemo(keys: Array<'kpi_daily'|'ledger'|'settings'> = ['kpi_d
   for(const k of keys){ clearCsvLS(k) }
   location.reload()
 }
+export function clearToLive(
+  keys: Array<'kpi_daily'|'ledger'|'settings'> = ['kpi_daily','ledger','settings']
+){
+  resetDemo(keys) // 내부에서 reload 처리함
+}
 export function sourceTag(key:'kpi_daily'|'ledger'|'settings'): 'DEMO' | 'LIVE' {
   const raw = readCsvLS(key)
   if (!raw) return 'DEMO'
