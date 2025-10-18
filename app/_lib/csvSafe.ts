@@ -1,5 +1,6 @@
 'use client'
 import { parseCsv, type CsvTable } from './readCsv'
+import { migrateKpi } from './csvMigrate'
 
 type Cache = Record<string, { raw:string; table:CsvTable }>
 const cache: Cache = {}
@@ -22,6 +23,17 @@ export function clearCsvLS(key:string){
     localStorage.removeItem(key); localStorage.removeItem(`${key}.__ts`)
   }catch{}
 }
+export function readCsvOrDemo(key:'kpi_daily'|'ledger'|'settings'): string {
+  try {
+    const raw = readCsvLS(key) || ''
+    if (!raw.trim()) return key==='kpi_daily' ? DEMO_KPI : raw
+    const safe = key==='kpi_daily' ? migrateKpi(raw) : raw
+    return safe
+  } catch {
+    // 파손 시 초기화 + 데모
+    if (key==='kpi_daily') return DEMO_KPI
+    return ''
+  }
 
 /** 데모 샘플 */
 const DEMO_KPI_DAILY = `date,channel,product,visits,clicks,orders,revenue,ad_cost,returns,week_index
