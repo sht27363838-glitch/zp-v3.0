@@ -1,15 +1,14 @@
-// app/_components/VirtualTable.tsx
 'use client'
 import React from 'react'
 
 type Column<T> = {
   key: keyof T | string
   header: React.ReactNode
-  width?: number | string               // 96 | '120px' | '12ch'
-  className?: string                    // 'num' → 우측정렬
+  width?: number | string              // 96 | '120px' | '12ch'
+  className?: string                   // 'num' → 우측정렬
   render?: (row: T) => React.ReactNode
-  sortable?: boolean                    // ⬅ 정렬 허용 여부
-  sortKey?: (row: T) => number | string // ⬅ 정렬용 키(숫자열이면 number 반환 권장)
+  sortable?: boolean                   // 정렬 허용
+  sortKey?: (row: T) => number | string
 }
 
 type Props<T> = {
@@ -19,49 +18,44 @@ type Props<T> = {
   className?: string
   height?: number
   rowHeight?: number
+  /** 빈 상태일 때 보여줄 콘텐츠 (기본: '데이터 없음') */
+  empty?: React.ReactNode
 }
 
 type SortState = { key?: string; dir: 'asc' | 'desc' }
 
 export default function VirtualTable<T>({
-  rows, columns, rowKey, className='table', height = 420, rowHeight = 40,
+  rows,
+  columns,
+  rowKey,
+  className = 'table',
+  height = 420,
+  rowHeight = 40,
+  empty = <div className="card" style={{padding:12}}>데이터 없음</div>,
 }: Props<T>) {
-
   const [sort, setSort] = React.useState<SortState>({ dir: 'asc' })
 
   const sortedRows = React.useMemo(() => {
     if (!sort.key) return rows
     const col = columns.find(c => (c.key as string) === sort.key)
     if (!col) return rows
-    const getVal = col.sortKey
-      ? col.sortKey
-      : (r: any) => r[sort.key as string]
-
+    const getVal = col.sortKey ? col.sortKey : (r: any) => r[sort.key as string]
     const copy = [...rows]
     copy.sort((a, b) => {
       const va = getVal(a)
       const vb = getVal(b)
-      // 숫자 우선 비교
       const na = typeof va === 'number' ? va : Number(va ?? NaN)
       const nb = typeof vb === 'number' ? vb : Number(vb ?? NaN)
       let cmp: number
-      if (!Number.isNaN(na) && !Number.isNaN(nb)) {
-        cmp = na - nb
-      } else {
-        const sa = String(va ?? '')
-        const sb = String(vb ?? '')
-        cmp = sa.localeCompare(sb, 'ko')
-      }
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) cmp = na - nb
+      else cmp = String(va ?? '').localeCompare(String(vb ?? ''), 'ko')
       return sort.dir === 'asc' ? cmp : -cmp
     })
     return copy
   }, [rows, sort, columns])
 
   function toggleSort(key: string) {
-    setSort(prev => {
-      if (prev.key !== key) return { key, dir: 'asc' }
-      return { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
-    })
+    setSort(prev => (prev.key !== key ? { key, dir: 'asc' } : { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }))
   }
 
   function thProps(c: Column<T>): React.ThHTMLAttributes<HTMLTableHeaderCellElement> {
@@ -69,11 +63,6 @@ export default function VirtualTable<T>({
     const isActive = sort.key === (c.key as string)
     const ariaSort: React.AriaAttributes['aria-sort'] =
       isActive ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'
-    const style: React.CSSProperties = {
-      userSelect: 'none',
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-    }
     return {
       role: 'button',
       tabIndex: 0,
@@ -86,52 +75,41 @@ export default function VirtualTable<T>({
       },
       'aria-sort': ariaSort,
       'aria-label': '정렬',
-      style,
+      className: `sortable ${isActive ? (sort.dir === 'asc' ? 'asc' : 'desc') : ''} ${c.className || ''}`.trim(),
     }
   }
 
-  const SortIcon = ({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) => (
-    <span
-      aria-hidden
-      style={{
-        display: 'inline-block',
-        marginLeft: 6,
-        opacity: active ? 1 : .35,
-        transform: dir === 'asc' ? 'rotate(180deg)' : 'none'
-      }}
-    >▾</span>
-  )
+  if (!rows || rows.length === 0) {
+    return <div className="card" style={{padding:0}}>{empty}</div>
+  }
 
   return (
     <div className="card" style={{ padding: 0 }}>
       <div className="scroll" style={{ maxHeight: height, overflow: 'auto' }}>
         <table className={className} style={{ width: '100%' }}>
-          {/* 헤더/바디 폭 일치 */}
           <colgroup>
             {columns.map((c, i) => (
               <col
                 key={i}
-                style={c.width
-                  ? { width: typeof c.width === 'number' ? `${c.width}px` : c.width }
-                  : undefined}
+                style={
+                  c.width
+                    ? { width: typeof c.width === 'number' ? `${c.width}px` : c.width }
+                    : undefined
+                }
               />
             ))}
           </colgroup>
 
           <thead>
             <tr>
-              {columns.map((c, i) => {
-                const key = c.key as string
-                const active = sort.key === key
-                return (
-                  <th key={i} className={c.className || undefined} {...thProps(c)}>
-                    <span style={{display:'inline-flex', alignItems:'center'}}>
-                      {c.header}
-                      {c.sortable && <SortIcon active={active} dir={active ? sort.dir : 'asc'} />}
-                    </span>
-                  </th>
-                )
-              })}
+              {columns.map((c, i) => (
+                <th key={i} {...thProps(c)}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                    {c.header}
+                    {c.sortable && <span aria-hidden className="sort-indicator" />}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
 
@@ -151,7 +129,18 @@ export default function VirtualTable<T>({
           </tbody>
         </table>
       </div>
+
+      <style jsx>{`
+        :global(th.sortable){ user-select:none; cursor:pointer; }
+        :global(th .sort-indicator){
+          width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+          border-top:6px solid currentColor; opacity:.45; transform:translateY(1px);
+        }
+        :global(th.sortable.asc .sort-indicator){ transform:rotate(180deg) translateY(-1px); opacity:1; }
+        :global(th.sortable.desc .sort-indicator){ opacity:1; }
+      `}</style>
     </div>
   )
 }
+
 
