@@ -1,28 +1,18 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 
-const THEME_KEY = 'theme' // 'dark' | 'light'
-
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'dark'|'light'>('dark')
-
-  // 첫 렌더 이전에 적용되도록(FOUC 최소화)
-  useEffect(() => {
-    const saved = (localStorage.getItem(THEME_KEY) as 'dark'|'light') || 'dark'
-    setTheme(saved)
-    document.documentElement.classList.toggle('light', saved === 'light')
-  }, [])
-
-  function toggle() {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem(THEME_KEY, next)
-    document.documentElement.classList.toggle('light', next === 'light')
+export default function ThemeToggle(){
+  const [light,setLight] = React.useState(false)
+  React.useEffect(()=>{
+    const saved = localStorage.getItem('theme') === 'light'
+    setLight(saved)
+    document.documentElement.classList.toggle('light', saved)
+  },[])
+  const flip = ()=>{
+    const next = !light
+    setLight(next)
+    document.documentElement.classList.toggle('light', next)
+    localStorage.setItem('theme', next ? 'light' : 'dark')
   }
-
-  return (
-    <button className="btn" onClick={toggle} aria-label="테마 토글">
-      {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-    </button>
-  )
+  return <button className="badge" onClick={flip}>{light? '라이트' : '다크'}</button>
 }
