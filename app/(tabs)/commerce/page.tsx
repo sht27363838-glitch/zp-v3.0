@@ -2,174 +2,123 @@
 'use client'
 
 import React, { useMemo, useState, useDeferredValue } from 'react'
-import { readCsvOrDemo } from '@lib/readCsv'
-import { parseCsv, type CsvTable } from '@lib/readCsv'
+import { readCsvOrDemo, parseCsv, type CsvRow } from '@lib/readCsv'
 import { num, fmt, pct } from '@lib/num'
-import useIdle from '@lib/useIdle'
-import CohortSpark from '@cmp/CohortSpark'
-import LtvCurve from '@cmp/LtvCurve'
+import ErrorBanner from '@cmp/ErrorBanner'
 import ExportBar from '@cmp/ExportBar'
+import useIdle from '@lib/useIdle'
+import HeatMap from '@cmp/HeatMap'
 
-type Row = Record<string, any>
+type Row = {
+  date?: string
+  channel?: string
+  product?: string
+  visits?: number
+  clicks?: number
+  orders?: number
+  ad_cost?: number
+}
 
-export default function Commerce() {
-  // 데모 대체 로더
+export default function CommercePage() {
+  // 1) 데이터 로드
   const raw = readCsvOrDemo('kpi_daily')
-  const tbl: CsvTable = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
-  const rows = (tbl.rows as Row[]) || []
+  const data = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
 
-  // AOV 워터폴 (가벼움)
-  const aovData = useMemo(() => {
-    let carts = 0, orders = 0, revenue = 0
-    for (const r of rows) { carts += num(r.carts); orders += num(r.orders); revenue += num(r.revenue) }
-    return { carts, orders, revenue, aov: orders ? revenue / orders : 0 }
-  }, [rows])
+  // 2) 행 정규화
+  const rows: Row[] = useMemo(() => {
+    return (data.rows as CsvRow[]).map(r => ({
+      date: String(r.date ?? ''),
+      channel: String(r.channel ?? 'unknown'),
+      product: String((r as any).product ?? (r as any).sku ?? 'generic'),
+      visits: num(r.visits),
+      clicks: num(r.clicks),
+      orders: num(r.orders),
+      ad_cost: num(r.ad_cost),
+    }))
+  }, [data.rows])
 
-  // 지연 렌더링
+  // 3) 성능: idle/deferred
   const idleReady = useIdle(500)
   const deferredRows = useDeferredValue(rows)
 
-  // 히트맵 보조
-  const [focus, setFocus] = useState<{ prod: string; ch: string } | null>(null)
-  const xcats = useMemo(() => Array.from(new Set(rows.map(r => r.channel || 'unknown'))), [rows])
-  const prods = useMemo(() => Array.from(new Set(rows.map(r => r.product || r.sku || 'generic'))), [rows])
-
-  function cellValue(prod: string, ch: string) {
-    let clicks = 0, orders = 0
-    for (const r of rows) {
-      if ((r.channel || 'unknown') === ch && (r.product || r.sku || 'generic') === prod) {
-        clicks += num(r.clicks); orders += num(r.orders)
-      }
-    }
-    return { clicks, orders, cr: clicks ? orders / Math.max(1, clicks) : 0 }
-  }
-
-  // 코호트/LTV
-  const cohort = useMemo(() => {
-    const weeks = 8
-    return Array.from({ length: weeks }, (_, i) => {
-      let s = 0; for (const r of rows) if ((num(r.week_index) || 0) === i) s += num(r.orders)
-      return s
-    })
-  }, [rows])
-
-  const cum = useMemo(() => { let s = 0; return cohort.map(v => (s += Number(v) || 0)) }, [cohort])
+  // 4) 모달 포커스 상태
+  const [focus, setFocus] = useState<{
+    x: string; y: string; clicks: number; orders: number; visits: number; ad_cost: number; cr: number;
+  } | null>(null)
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{display:'flex', alignItems:'center', gap:8}}>
         <h1>C2 — 전환/커머스 레이더</h1>
-        <ExportBar selector="#commerce-cards" />
+        <ExportBar selector="#commerce-heat" />
       </div>
 
-      <div id="commerce-cards" className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--gap)' }}>
-        <div className="card">
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-            <b>AOV 워터폴</b>
-            <span className="badge">{fmt(aovData.aov)} / 주문</span>
-          </div>
-          <div className="waterfall" style={{ display: 'flex', gap: 12 }}>
-            {[
-              { label: '장바구니', val: aovData.carts },
-              { label: '주문', val: aovData.orders },
-              { label: '매출', val: aovData.revenue },
-            ].map((s, i) => (
-              <div
-                key={i}
-                className="wf-seg"
-                title={`${s.label}: ${fmt(s.val)}`}
-                style={{
-                  flex: 1, background: 'var(--panel)', borderRadius: 'var(--radius)',
-                  boxShadow: 'var(--shadow)', padding: 'var(--pad)'
-                }}
-              >
-                <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{s.label}</div>
-                <div style={{ fontWeight: 700 }}>{fmt(s.val)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {!idleReady ? (
-          <div className="skeleton" style={{ height: 180 }} />
-        ) : (
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--gap)' }}>
-            <div className="card">
-              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>코호트(주간)</div>
-              <CohortSpark series={cohort} />
-            </div>
-            <LtvCurve cum={cum} />
-          </div>
-        )}
-      </div>
-
-      {!idleReady ? (
-        <div className="skeleton" style={{ height: 260, marginTop: 'var(--gap)' }} />
+      {/* 데이터 없음/에러 가드 */}
+      {deferredRows.length === 0 ? (
+        <>
+          <div className="skeleton" />
+          <ErrorBanner
+            tone="info"
+            title="데이터 없음"
+            message="kpi_daily.csv가 비어 있습니다. Tools 탭에서 데모 업로드 후 확인하세요."
+            show
+          />
+        </>
       ) : (
-        <div className="card" style={{ marginTop: 'var(--gap)' }}>
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-            <b>상품 × 소스 히트맵 (CR)</b>
-            {focus && <span className="badge">{focus.prod} / {focus.ch} — 클릭하면 상세</span>}
-          </div>
-          <div className="scroll">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>상품 \ 소스</th>
-                  {xcats.map(ch => <th key={ch}>{ch}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {prods.map(p => (
-                  <tr key={p}>
-                    <td><b>{p}</b></td>
-                    {xcats.map(ch => {
-                      const v = cellValue(p, ch)
-                      const heat = Math.min(1, v.cr * 3)
-                      return (
-                        <td key={ch}>
-                          <button
-                            className="cell"
-                            onClick={() => setFocus({ prod: p, ch })}
-                            aria-label={`CR ${pct(v.cr)} / 주문 ${fmt(v.orders)} / 클릭 ${fmt(v.clicks)}`}
-                            style={{
-                              width: '100%', padding: '8px',
-                              background: `rgba(79,227,193,${0.08 + 0.35 * heat})`,
-                              borderRadius: 8
-                            }}
-                          >
-                            {pct(v.cr)}
-                          </button>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div id="commerce-heat" style={{marginTop:12}}>
+          {!idleReady ? (
+            <div className="skeleton" style={{height:260}} />
+          ) : (
+            <HeatMap
+              rows={deferredRows}
+              xKey="channel"     // X축: 채널
+              yKey="product"     // Y축: 상품/SKU
+              className="table"
+              onCellClick={(info) => setFocus(info)}  // 셀 클릭 시 모달 열기
+            />
+          )}
+        </div>
+      )}
 
-          {focus && (
-            <div className="modal" onClick={() => setFocus(null)}>
-              <div className="modal-body" onClick={e => e.stopPropagation()}>
-                <div className="row" style={{ justifyContent: 'space-between' }}>
-                  <b>{focus.prod} / {focus.ch}</b>
-                  <button className="btn" onClick={() => setFocus(null)}>닫기</button>
-                </div>
-                <div className="muted" style={{ marginTop: 6 }}>최근 추이</div>
-                <CohortSpark
-                  series={
-                    deferredRows
-                      .filter(r => (r.channel || 'unknown') === focus.ch && (r.product || r.sku || 'generic') === focus.prod)
-                      .slice(-20)
-                      .map(r => (num(r.orders) && num(r.clicks)) ? num(r.orders) / Math.max(1, num(r.clicks)) : 0)
-                  }
-                />
+      {/* 상세 모달 */}
+      {focus && (
+        <div className="modal" onClick={()=>setFocus(null)}>
+          <div className="modal-body" onClick={e=>e.stopPropagation()}>
+            <div className="row" style={{justifyContent:'space-between'}}>
+              <b>{focus.y} / {focus.x}</b>
+              <button className="btn" onClick={()=>setFocus(null)}>닫기</button>
+            </div>
+
+            <div className="row" style={{gap:16, marginTop:12}}>
+              <div className="card" style={{flex:1}}>
+                <div className="muted" style={{fontSize:12, marginBottom:6}}>CR</div>
+                <div style={{fontWeight:700}}>{pct(focus.cr)}</div>
+              </div>
+              <div className="card" style={{flex:1}}>
+                <div className="muted" style={{fontSize:12, marginBottom:6}}>클릭</div>
+                <div style={{fontWeight:700}}>{fmt(focus.clicks)}</div>
+              </div>
+              <div className="card" style={{flex:1}}>
+                <div className="muted" style={{fontSize:12, marginBottom:6}}>주문</div>
+                <div style={{fontWeight:700}}>{fmt(focus.orders)}</div>
+              </div>
+              <div className="card" style={{flex:1}}>
+                <div className="muted" style={{fontSize:12, marginBottom:6}}>방문</div>
+                <div style={{fontWeight:700}}>{fmt(focus.visits)}</div>
+              </div>
+              <div className="card" style={{flex:1}}>
+                <div className="muted" style={{fontSize:12, marginBottom:6}}>광고비</div>
+                <div style={{fontWeight:700}}>{fmt(focus.ad_cost)}</div>
               </div>
             </div>
-          )}
+
+            <p className="muted" style={{marginTop:8}}>
+              선택: <b>{focus.y}</b> × <b>{focus.x}</b> — 클릭하면 닫힙니다.
+            </p>
+          </div>
         </div>
       )}
     </div>
   )
 }
+
