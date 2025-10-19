@@ -1,5 +1,6 @@
 // app/(tabs)/convert/page.tsx
 'use client'
+export { default } from '../(tabs)/convert/page'
 
 import React, { useMemo } from 'react'
 import ExportBar from '@cmp/ExportBar'
