@@ -86,3 +86,12 @@ function heat(v: number) {
   const b = Math.round(180 - 80 * t)
   return `rgb(40,${g},${b})`
 }
+
+// 각 행 1회 순회로 합치기
+for (const r of rows) {
+  const k = `${r.date}|${r.channel}`
+  const o = agg.get(k) ?? { visits:0, orders:0, cost:0 }
+  o.visits += r.visits; o.orders += r.orders; o.cost += r.ad_cost
+  agg.set(k, o)
+}
+
