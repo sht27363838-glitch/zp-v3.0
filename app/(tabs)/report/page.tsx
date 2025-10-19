@@ -28,7 +28,7 @@ export default function ReportPage(){
   const data = useMemo(()=> parseCsv(raw), [raw])
   const check = validate('kpi_daily', data)
 
-  // KPI 합계
+  // KPI 합계(전체)
   let visits=0, clicks=0, orders=0, revenue=0, adCost=0, returns=0
   for(const r of data.rows as CsvRow[]){
     visits += num(r.visits);  clicks += num(r.clicks); orders += num(r.orders)
@@ -71,6 +71,24 @@ export default function ReportPage(){
       return true
     })
   },[baseRows, query, from, to, sel])
+
+  // ✅ 필터 반영 합계(요약 바에 사용)
+  const filteredSum = useMemo(()=>{
+    let v=0, c=0, o=0, r=0, a=0, ret=0
+    for (const row of filtered) {
+      v   += num(row.visits)
+      c   += num(row.clicks)
+      o   += num(row.orders)
+      r   += num(row.revenue)
+      a   += num(row.ad_cost)
+      ret += num(row.returns)
+    }
+    const roas = a ? r/a : 0
+    const cr   = v ? o/v : 0
+    const aov  = o ? r/o : 0
+    const rr   = o ? ret/o : 0
+    return { v, c, o, r, a, ret, roas, cr, aov, rr }
+  },[filtered])
 
   const toggleChannel = (ch:string)=>{
     setSel(prev=>{
@@ -166,29 +184,46 @@ export default function ReportPage(){
         </div>
       </div>
 
-      {/* ===== 테이블 ===== */}
+      {/* ===== 테이블 + 합계 바 ===== */}
       {filtered.length === 0 ? (
         <div className="skeleton" />
       ) : (
-        <div id="report-table">
-          <VirtualTable<CsvRow>
-            className="table"
-            rows={filtered}
-            height={480}
-            rowHeight={40}
-            rowKey={(r, i)=> `${String(r.date ?? '')}-${String(r.channel ?? '')}-${i}`}
-            columns={[
-              { key: 'date',    header: '날짜',   width: 120,                            sortable: true, render: r => String(r.date ?? '') },
-              { key: 'channel', header: '채널',   width: 140,                            sortable: true, render: r => String(r.channel ?? '') },
-              { key: 'visits',  header: '방문',   width: 110, className:'num',           sortable: true, render: r => fmt(r.visits) },
-              { key: 'clicks',  header: '클릭',   width: 110, className:'num',           sortable: true, render: r => fmt(r.clicks) },
-              { key: 'orders',  header: '주문',   width: 110, className:'num',           sortable: true, render: r => fmt(r.orders) },
-              { key: 'revenue', header: '매출',   width: 130, className:'num',           sortable: true, render: r => fmt(r.revenue) },
-              { key: 'ad_cost', header: '광고비', width: 130, className:'num',           sortable: true, render: r => fmt(r.ad_cost) },
-              { key: 'returns', header: '반품',   width: 110, className:'num',           sortable: true, render: r => fmt(r.returns) },
-            ]}
-          />
-        </div>
+        <>
+          <div id="report-table">
+            <VirtualTable<CsvRow>
+              className="table"
+              rows={filtered}
+              height={480}
+              rowHeight={40}
+              rowKey={(r, i)=> `${String(r.date ?? '')}-${String(r.channel ?? '')}-${i}`}
+              columns={[
+                { key: 'date',    header: '날짜',   width: 120, sortable: true, render: r => String(r.date ?? '') },
+                { key: 'channel', header: '채널',   width: 140, sortable: true, render: r => String(r.channel ?? '') },
+                { key: 'visits',  header: '방문',   width: 110, className:'num', sortable: true, sortKey:r=>Number((r as any).visits)||0,  render: r => fmt(r.visits) },
+                { key: 'clicks',  header: '클릭',   width: 110, className:'num', sortable: true, sortKey:r=>Number((r as any).clicks)||0,  render: r => fmt(r.clicks) },
+                { key: 'orders',  header: '주문',   width: 110, className:'num', sortable: true, sortKey:r=>Number((r as any).orders)||0,  render: r => fmt(r.orders) },
+                { key: 'revenue', header: '매출',   width: 130, className:'num', sortable: true, sortKey:r=>Number((r as any).revenue)||0, render: r => fmt(r.revenue) },
+                { key: 'ad_cost', header: '광고비', width: 130, className:'num', sortable: true, sortKey:r=>Number((r as any).ad_cost)||0, render: r => fmt(r.ad_cost) },
+                { key: 'returns', header: '반품',   width: 110, className:'num', sortable: true, sortKey:r=>Number((r as any).returns)||0, render: r => fmt(r.returns) },
+              ]}
+            />
+          </div>
+
+          {/* ✅ 필터 반영 합계 바 */}
+          <div className="card" style={{marginTop:8, display:'inline-flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
+            <span className="muted">합계</span>
+            <span>방문 {fmt(filteredSum.v)}</span>
+            <span>클릭 {fmt(filteredSum.c)}</span>
+            <span>주문 {fmt(filteredSum.o)}</span>
+            <span>매출 {fmt(filteredSum.r)}</span>
+            <span>광고비 {fmt(filteredSum.a)}</span>
+            <span className="muted">|</span>
+            <span>ROAS {pct1(filteredSum.roas)}</span>
+            <span>CR {pct1(filteredSum.cr)}</span>
+            <span>AOV {fmt(filteredSum.aov)}</span>
+            <span>반품률 {pct1(filteredSum.rr)}</span>
+          </div>
+        </>
       )}
 
       <div style={{marginTop:16, opacity:.8}}>
@@ -197,3 +232,4 @@ export default function ReportPage(){
     </div>
   )
 }
+
