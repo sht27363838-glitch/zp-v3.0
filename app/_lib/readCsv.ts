@@ -1,6 +1,22 @@
 export type CsvRow = Record<string, any>;
 export type CsvTable = { headers: string[]; rows: CsvRow[] };
 
+type CacheEntry<T> = { key:string; raw:string; value:T }
+const _cache: CacheEntry<any>[] = []
+const MAX_CACHE = 8   // 필요 시 조정
+
+function _getFromCache<T>(key:string, raw:string): T | null {
+  const i = _cache.findIndex(e => e.key===key && e.raw===raw)
+  if (i<0) return null
+  const [hit] = _cache.splice(i,1)
+  _cache.unshift(hit) // LRU 갱신
+  return hit.value as T
+}
+function _setCache<T>(key:string, raw:string, value:T){
+  _cache.unshift({key, raw, value})
+  if (_cache.length>MAX_CACHE) _cache.pop()
+}
+
 /** 아주 관대한 CSV 파서 (따옴표/콤마 최소 처리) */
 export function parseCsv(csv: string): CsvTable {
   if (!csv || !csv.trim()) return { headers: [], rows: [] };
