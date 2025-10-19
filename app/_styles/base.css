@@ -82,6 +82,19 @@ button, input, select, textarea{ color: inherit; }
   color: var(--text); background: rgba(255,255,255,.06);
   font-size: 12px; line-height: 1;
 }
+/* v3.9 visibility polish */
+.badge{
+  line-height: 1;
+  height: 22px;
+  font-weight: 600;
+  border-color: rgba(255,255,255,.18);
+}
+.card .note, .kpi-note{
+  font-size:12px;
+  line-height: 1.1;
+  opacity:.85;
+}
+
 .btn{
   display:inline-flex; align-items:center; justify-content:center;
   padding: 8px 12px; border-radius: 10px; border: var(--border);
