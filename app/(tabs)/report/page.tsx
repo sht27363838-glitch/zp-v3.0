@@ -9,6 +9,35 @@ import KpiTile from '@cmp/KpiTile'
 import ErrorBanner from '@cmp/ErrorBanner'
 import ExportBar from '@cmp/ExportBar'
 import VirtualTable from '@cmp/VirtualTable'
+import { useSearchParams, useRouter } from 'next/navigation'
+
+const sp = useSearchParams()
+const router = useRouter()
+
+// 최초 마운트 시 URL → 상태
+React.useEffect(()=>{
+  const q  = sp.get('q')  ?? ''
+  const f  = sp.get('from') ?? ''
+  const t  = sp.get('to') ?? ''
+  const ch = sp.get('ch') ?? ''     // comma list
+  setQuery(q)
+  setFrom(f)
+  setTo(t)
+  setSel(new Set(ch ? ch.split(',').filter(Boolean) : []))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [])
+
+// 상태가 바뀌면 URL 쿼리 동기화
+React.useEffect(()=>{
+  const params = new URLSearchParams()
+  if (query) params.set('q', query)
+  if (from)  params.set('from', from)
+  if (to)    params.set('to', to)
+  if (sel.size>0) params.set('ch', Array.from(sel).join(','))
+  const qs = params.toString()
+  router.replace(qs ? `?${qs}` : '?', { scroll: false })
+}, [query, from, to, sel, router])
+
 
 const pct1 = (v:number)=> `${(v*100).toFixed(1)}%`
 
