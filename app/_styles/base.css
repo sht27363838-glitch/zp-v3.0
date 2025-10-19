@@ -179,3 +179,11 @@ html, body {
   padding: 0.6rem 0.8rem;
 }
 
+/* === VirtualTable 정렬 시각 강화 === */
+.table th.sortable{ cursor:pointer; }
+.table th.sortable.active{ color: var(--primary); }
+
+/* 버튼 기본 높이 조정(테마 토글/채널 버튼) */
+.btn{ line-height: 1; }
+
+
