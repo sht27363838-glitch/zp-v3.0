@@ -1,144 +1,96 @@
+// app/(tabs)/reward/page.tsx
 'use client'
-export const dynamic = 'force-dynamic'
 
-import { sourceTag } from '@lib/csvSafe'
-import React, { useMemo, useState } from 'react'
-import { readCsvLS, parseCsv } from '../../_lib/readCsv'
-import { num, fmt } from '../../_lib/num'
-import { loadRules, evalGuards } from '../../_lib/rules'
-import { appendLedger, lastTimeKey, markTime } from '../../_lib/ledger'
-import ScrollWrap from '../../_components/ScrollWrap'
-import DownloadCsv from '../../_components/DownloadCsv'
+import React, { useMemo } from 'react'
+import ExportBar from '@cmp/ExportBar'
+import { readCsvOrDemo, sourceTag } from '@lib/csvSafe'
+import { parseCsv } from '@lib/readCsv'
+import { fmt } from '@lib/num'
 
-export default function RewardsPage() {
-  const raw = readCsvLS('ledger') || ''
-  const data = useMemo(() => (raw ? parseCsv(raw) : { headers: [], rows: [] }), [raw])
+type L = { date?: string; type?: string; stable?: number; edge?: number; memo?: string }
 
-  let stable = 0, edge = 0
-  for (const r of data.rows as any[]) {
-    stable += num((r as any).stable)
-    edge   += num((r as any).edge)
-  }
-  const total = stable + edge
-  const edgeShare = total ? edge / total : 0
+export default function RewardPage(){
+  const raw = readCsvOrDemo('ledger') || ''
+  const parsed = useMemo(()=> raw ? parseCsv(raw) : { headers:[], rows:[] }, [raw])
 
-  const kraw = readCsvLS('kpi_daily') || ''
-  const kdata = useMemo(() => (kraw ? parseCsv(kraw) : { headers: [], rows: [] }), [kraw])
-  let visits = 0, clicks = 0, orders = 0, revenue = 0, adCost = 0, returns = 0
-  for (const r of kdata.rows as any[]) {
-    visits  += num((r as any).visits)
-    clicks  += num((r as any).clicks)
-    orders  += num((r as any).orders)
-    revenue += num((r as any).revenue)
-    adCost  += num((r as any).ad_cost)
-    returns += num((r as any).returns)
-  }
-  const CTR = visits ? clicks / visits : 0
+  const list = useMemo(()=> {
+    return (parsed.rows as any[]).map(r=>({
+      date: String(r.date ?? ''),
+      type: String(r.type ?? ''),
+      stable: Number(r.stable ?? 0),
+      edge: Number(r.edge ?? 0),
+      memo: String(r.memo ?? ''),
+    })) as L[]
+  },[parsed.rows])
 
-  const rules = loadRules()
-  const guards = evalGuards(
-    { revenue, ad_cost: adCost, orders, visits, returns, ctr: CTR, freq: undefined },
-    rules
-  )
-
-  const cooldownKey = 'dailyLoop.last'
-  const last = lastTimeKey(cooldownKey)
-  const canClick = Date.now() - last > (rules.triggers.dailyLoop.cooldownH * 3600_000)
-
-  const [loading, setLoading] = useState(false)
-
-  async function payoutDaily() {
-    if (!canClick || loading) return
-    try {
-      setLoading(true)
-      const lastMonthProfit = 1_000_000
-      const cut = guards.returnsHigh ? rules.debuffs.returnsSpike.payoutCut : 1
-      const s = (rules.triggers.dailyLoop.stablePct / 100) * lastMonthProfit * cut
-      const e = guards.adFatigue ? 0 : (rules.triggers.dailyLoop.edgePct / 100) * lastMonthProfit * cut
-
-      appendLedger({
-        date: new Date().toISOString().slice(0, 10),
-        mission: 'Daily Loop',
-        type: 'daily',
-        stable: s, edge: e,
-        note: guards.adFatigue ? 'EDGE LOCK' : (guards.returnsHigh ? 'PAYOUT CUT' : ''),
-        lock_until: ''
-      })
-      markTime(cooldownKey)
-      alert('✅ 보상 기록 완료 (일일)')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const total = useMemo(()=>{
+    let s=0,e=0
+    for(const r of list){ s+=r.stable||0; e+=r.edge||0 }
+    const ratio = (s+e) ? e/(s+e) : 0
+    return { s, e, ratio }
+  },[list])
 
   return (
-    <div className="pad">
+    <div className="page">
       <div style={{display:'flex', alignItems:'center', gap:8}}>
-  <h2 className="title">C4 — 보상 엔진</h2>
-  <span className="badge">{sourceTag('ledger')}</span>
-</div>
+        <h1>C4 — 보상 엔진</h1>
+        <ExportBar selector="#reward-area" />
+        <span className="badge">{sourceTag('ledger')}</span>
+      </div>
 
-
-      <div className="row gap">
+      <div id="reward-area" className="kpi-grid" style={{marginTop:12}}>
         <div className="card">
-          <div className="label">안정(Stable) 누적</div>
-          <div className="value">{fmt(stable)}</div>
+          <div className="muted">안정(Stable) 누적</div>
+          <div style={{fontSize:24, fontWeight:700}}>{fmt(total.s)}</div>
         </div>
         <div className="card">
-          <div className="label">엣지(Edge) 누적</div>
-          <div className="value">{fmt(edge)}</div>
+          <div className="muted">엣지(Edge) 누적</div>
+          <div style={{fontSize:24, fontWeight:700}}>{fmt(total.e)}</div>
         </div>
         <div className="card">
-          <div className="label">엣지 비중</div>
-          <div className="value">{(edgeShare * 100).toFixed(1)}%</div>
+          <div className="muted">엣지 비중</div>
+          <div style={{fontSize:24, fontWeight:700}}>{(total.ratio*100).toFixed(1)}%</div>
         </div>
       </div>
 
-      <div className="row gap mt-4">
-        <button
-          className="btn primary"
-          disabled={!canClick || loading}
-          style={{ opacity: loading ? 0.6 : 1 }}
-          onClick={payoutDaily}
-        >
-          {loading ? '처리 중…' : '보상 기록(일일)'}
-        </button>
-        {guards.adFatigue && <span className="badge warn">엣지 잠금</span>}
-        {guards.returnsHigh && <span className="badge danger">보상 감액</span>}
-      </div>
-      <div className="row" style={{gap:8, margin:'8px 0'}}>
-  <DownloadCsv keyName="ledger" label="ledger.csv 다운로드"/>
-</div>
-
-
-      <div className="mt-6">
-        <div className="text-dim text-sm">※ 최근 50건</div>
-        {data.rows.length === 0 ? (
-          <div className="skeleton" />
-        ) : (
-          <ScrollWrap>
-            <table className="table">
+      {list.length === 0 ? (
+        <div className="card" style={{marginTop:16}}>
+          <b>기록이 없습니다.</b>
+          <p className="muted" style={{marginTop:6}}>
+            도구 탭 &gt; “데모 Ledger 주입”을 클릭하거나, <code>ledger.csv</code>를 붙여넣어 주세요.
+          </p>
+        </div>
+      ) : (
+        <div className="card" style={{marginTop:16, padding:0}}>
+          <div className="scroll" style={{maxHeight:420, overflow:'auto'}}>
+            <table className="table" style={{width:'100%'}}>
+              <colgroup>
+                <col width="140"/><col width="120"/><col width="140"/><col width="140"/><col />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>날짜</th><th>미션</th><th>종류</th><th>Stable</th><th>Edge</th><th>메모</th>
+                  <th>날짜</th><th>유형</th>
+                  <th className="num">Stable</th>
+                  <th className="num">Edge</th>
+                  <th>메모</th>
                 </tr>
               </thead>
               <tbody>
-                {(data.rows as any[]).slice(-50).reverse().map((r:any, i:number)=>(
+                {list.slice(-50).reverse().map((r,i)=>(
                   <tr key={i}>
                     <td>{r.date}</td>
-                    <td>{r.mission}</td>
                     <td>{r.type}</td>
-                    <td>{fmt(num(r.stable))}</td>
-                    <td>{fmt(num(r.edge))}</td>
-                    <td>{r.note||''}</td>
+                    <td className="num">{fmt(r.stable)}</td>
+                    <td className="num">{fmt(r.edge)}</td>
+                    <td>{r.memo}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </ScrollWrap>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
