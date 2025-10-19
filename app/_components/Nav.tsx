@@ -1,11 +1,12 @@
 'use client'
-import React from 'react'
+
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const tabs = [
   { name: '지휘소', href: '/' },
   { name: '유입',   href: '/growth' },
-  { name: '전환',   href: '/convert' },   // ← 전환 경로를 /convert 로 고정
+  { name: '전환',   href: '/convert' },   // ← 여기 고정
   { name: '보상',   href: '/reward' },
   { name: '리포트', href: '/report' },
   { name: '도구',   href: '/tools' },
@@ -18,7 +19,7 @@ export default function Nav() {
       <ul>
         {tabs.map(t => (
           <li key={t.href} className={path === t.href ? 'active' : ''}>
-            <a href={t.href}>{t.name}</a>
+            <Link href={t.href}>{t.name}</Link>
           </li>
         ))}
       </ul>
