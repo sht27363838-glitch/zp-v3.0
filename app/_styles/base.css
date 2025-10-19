@@ -162,3 +162,20 @@ html, body {
 
 .table th[aria-sort="ascending"]  span::after { content:" ↑"; opacity:.8 }
 .table th[aria-sort="descending"] span::after { content:" ↓"; opacity:.8 }
+
+/* 빈 상태 */
+.empty-state{
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* 테이블 푸터 */
+.table tfoot td{
+  position: sticky;
+  bottom: 0;
+  background: color-mix(in oklab, var(--panel) 92%, black);
+  border-top: var(--border);
+  padding: 0.6rem 0.8rem;
+}
+
