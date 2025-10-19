@@ -147,3 +147,5 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.table th[aria-sort="ascending"]  span::after { content:" ↑"; opacity:.8 }
+.table th[aria-sort="descending"] span::after { content:" ↓"; opacity:.8 }
