@@ -1,39 +1,26 @@
 'use client'
-
-import { sourceTag } from '@lib/csvSafe'
 import React from 'react'
 import dynamic from 'next/dynamic'
-import ErrorBanner from '@cmp/ErrorBanner'
-import { injectDemo, resetDemo } from '@lib/csvSafe'
+import { injectDemo, resetDemo } from '@lib/csvSafe'  // resetDemo(keys: Array<'kpi_daily'|'ledger'|'settings'>)
 
 const CsvWizard = dynamic(() => import('@cmp/CsvWizard'), { ssr:false })
 
 export default function ToolsPage(){
   return (
-    <div className="container page">
-      <div style={{display:'flex', alignItems:'center', gap:8}}>
-  <h1>도구</h1>
-  <span className="badge">KPI: {sourceTag('kpi_daily')}</span>
-  <span className="badge">Ledger: {sourceTag('ledger')}</span>
-</div>
+    <div className="page">
+      <h1>도구</h1>
 
+      <div className="card" style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+        <button className="btn" onClick={()=>injectDemo('kpi_daily')}>데모 KPI 주입</button>
+        <button className="btn" onClick={()=>injectDemo('ledger')}>데모 Ledger 주입</button>
+        <button className="btn" onClick={()=>resetDemo(['kpi_daily'])}>KPI 초기화(LIVE)</button>
+        <button className="btn" onClick={()=>resetDemo(['ledger'])}>Ledger 초기화(LIVE)</button>
+      </div>
 
-      <ErrorBanner tone="info" title="데이터 소스 안내"
-        message="아래 버튼으로 데모 데이터를 즉시 주입/초기화할 수 있습니다." show />
-
-     <div className="row" style={{gap:8, margin:'8px 0'}}>
-  <button className="btn" onClick={()=>injectDemo('kpi_daily')}>데모 KPI 주입</button>
-  <button className="btn" onClick={()=>injectDemo('ledger')}>데모 Ledger 주입</button>
-
-  {/* ✅ LIVE 초기화: 배열로 전달 */}
-  <button className="btn" onClick={()=>resetDemo(['kpi_daily'])}>KPI 초기화(LIVE)</button>
-  <button className="btn" onClick={()=>resetDemo(['ledger'])}>Ledger 초기화(LIVE)</button>
-</div>
-      <div className="card" style={{marginTop:12}}>
-        <div className="title">CSV 관리</div>
-        <div className="note" style={{marginBottom:8}}>업로드/다운로드</div>
+      <div style={{marginTop:12}}>
         <CsvWizard />
       </div>
     </div>
   )
 }
+
