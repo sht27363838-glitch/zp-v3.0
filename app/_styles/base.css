@@ -1,33 +1,43 @@
 /* app/_styles/base.css */
 
-/* ========== Color tokens ========== */
-/* 기본을 다크로 둡니다 */
-:root{
-  --bg: #0e1116;
-  --panel: #161a22;
-  --text: #ecf3fb;               /* ✅ 다크 본문색 (가독성 개선) */
-  --muted: #9fb2c8;
-  --primary: #4fe3c1;
-  --ring: rgba(79,227,193,.35);
-  --radius: 12px;
-  --gap: 12px;
-  --pad: 12px;
-  --shadow: 0 6px 18px rgba(0,0,0,.18);
-  --border: 1px solid rgba(255,255,255,.08);
+/* =========================================================
+   Color tokens: Light/Dark 동시 지원 (data-theme 기반)
+   - 기본 안전값 (--text)도 지정
+   ========================================================= */
+:root { --text:#101418; } /* 안전 기본값 */
+
+:root,
+[data-theme="light"]{
+  --bg:#ffffff;
+  --panel:#f3f5f9;
+  --text:#101418;
+  --muted:#5b6b7c;
+  --primary:#0ea5e9;
+  --ring:rgba(14,165,233,.35);
+  --radius:12px;
+  --gap:12px;
+  --pad:12px;
+  --shadow:0 6px 18px rgba(0,0,0,.18);
+  --border:1px solid rgba(0,0,0,.08);
 }
 
-/* 라이트 모드: html.light 를 붙여 전환 */
-html.light {
-  --bg: #ffffff;
-  --panel: #f3f5f9;
-  --text: #101418;               /* ✅ 라이트 본문색 */
-  --muted: #5b6b7c;
-  --primary: #0ea5e9;
-  --ring: rgba(14,165,233,.35);
-  --border: 1px solid rgba(0,0,0,.08);
+[data-theme="dark"]{
+  --bg:#0e1116;
+  --panel:#161a22;
+  --text:#ecf3fb;          /* ✅ 다크 본문색 가독성 */
+  --muted:#9fb2c8;
+  --primary:#4fe3c1;
+  --ring:rgba(79,227,193,.35);
+  --radius:12px;
+  --gap:12px;
+  --pad:12px;
+  --shadow:0 6px 18px rgba(0,0,0,.18);
+  --border:1px solid rgba(255,255,255,.08);
 }
 
-/* ========== Base reset ========== */
+/* =========================================================
+   Base reset
+   ========================================================= */
 *{ box-sizing: border-box; }
 html,body{ height:100%; }
 body{
@@ -37,11 +47,22 @@ body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Helvetica, Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
-/* 링크/폼의 기본색도 전역 텍스트 컬러를 따르게 */
+/* 링크/폼 컬러 */
 a{ color: var(--primary); text-decoration: none; }
 button, input, select, textarea{ color: inherit; }
 
-/* ========== Layout ========== */
+/* 접근성: 시스템 선호도 반영(선택) */
+@media (prefers-color-scheme: dark)  { :root { color-scheme: dark; } }
+@media (prefers-color-scheme: light) { :root { color-scheme: light; } }
+
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   Layout
+   ========================================================= */
 .container{ max-width: 1200px; margin: 24px auto; padding: 0 16px; }
 .page{ display:block; }
 
@@ -54,8 +75,7 @@ button, input, select, textarea{ color: inherit; }
 }
 .nav ul{
   display: flex; gap: 16px; align-items: center;
-  list-style: none;            /* ✅ 불릿 제거 */
-  margin: 0; padding: 10px 16px;
+  list-style: none; margin: 0; padding: 10px 16px;
 }
 .nav li a{
   display: inline-block; padding: 8px 10px; border-radius: 10px;
@@ -67,7 +87,9 @@ button, input, select, textarea{ color: inherit; }
   opacity:1;
 }
 
-/* ========== Card/Badge/Button ========== */
+/* =========================================================
+   Card / Badge / Button
+   ========================================================= */
 .card{
   background: var(--panel);
   border: var(--border);
@@ -75,35 +97,30 @@ button, input, select, textarea{ color: inherit; }
   box-shadow: var(--shadow);
   padding: var(--pad);
 }
+
 .badge{
   display:inline-flex; align-items:center; gap:6px;
-  height: 24px; padding:0 8px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  color: var(--text); background: rgba(255,255,255,.06);
-  font-size: 12px; line-height: 1;
+  height:22px; padding:0 8px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  color:var(--text); background: rgba(255,255,255,.06);
+  font-size:12px; line-height:1; font-weight:600;
 }
-/* v3.9 visibility polish */
-.badge{
-  line-height: 1;
-  height: 22px;
-  font-weight: 600;
-  border-color: rgba(255,255,255,.18);
-}
+
 .card .note, .kpi-note{
-  font-size:12px;
-  line-height: 1.1;
-  opacity:.85;
+  font-size:12px; line-height:1.1; opacity:.85;
 }
 
 .btn{
   display:inline-flex; align-items:center; justify-content:center;
-  padding: 8px 12px; border-radius: 10px; border: var(--border);
+  padding:8px 12px; border-radius:10px; border: var(--border);
   background: rgba(255,255,255,.06); color: var(--text);
-  cursor: pointer;
+  cursor: pointer; line-height:1;
 }
-.btn.primary{ background: var(--primary); color: #06221b; border: none; }
+.btn.primary{ background: var(--primary); color:#06221b; border:none; }
 
-/* ========== KPI Grid ========== */
+/* =========================================================
+   KPI Grid
+   ========================================================= */
 .kpi-grid{
   display:grid;
   grid-template-columns: repeat(3, minmax(0,1fr));
@@ -114,14 +131,16 @@ button, input, select, textarea{ color: inherit; }
   .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 
-/* ========== Table ========== */
+/* =========================================================
+   Table (VirtualTable 포함 공통)
+   ========================================================= */
 .table{
   width:100%;
   table-layout: fixed;          /* ✅ 칼럼 폭 고정 → 줄맞춤/스크롤 안정 */
   border-collapse: separate;
   border-spacing: 0;
 }
-.table thead th {
+.table thead th{
   position: sticky; top: 0;
   z-index: 1;
   background: var(--panel);
@@ -138,52 +157,49 @@ button, input, select, textarea{ color: inherit; }
   text-align: right;            /* ✅ 숫자 우측정렬 */
   font-variant-numeric: tabular-nums;
 }
-.table col.min { width: 96px; } /* 날짜/채널 최소폭 프리셋 */
+
+/* 정렬 아이콘(접근성 속성에 따라 표시) */
+.table th[aria-sort="ascending"]  span::after { content:" ↑"; opacity:.8; }
+.table th[aria-sort="descending"] span::after { content:" ↓"; opacity:.8; }
+
+/* 정렬 시각 강화 */
+.table th.sortable{ cursor:pointer; }
+.table th.sortable.active{ color: var(--primary); }
+
+/* 최소 폭 프리셋(선택) */
+.table col.min { width: 96px; }
 .table col.wide{ width: 140px; }
+
+/* 테이블 하단 합계 고정(tfoot 또는 커스텀 .vt-footer 용) */
+.table tfoot td{
+  position: sticky; bottom: 0; z-index: 1;
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  border-top: var(--border);
+  padding: 0.6rem 0.8rem;
+  backdrop-filter: blur(4px);
+}
+.vt-footer{
+  position: sticky; bottom: 0; z-index: 1;
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  border-top: var(--border);
+  padding: .6rem .8rem;
+  backdrop-filter: blur(4px);
+}
 
 /* 스켈레톤/스크롤 */
 .skeleton{ height: 160px; border-radius: var(--radius); background: rgba(255,255,255,.06); }
 .scroll{ overflow: auto; }
 
-/* Helper */
-.muted{ color: var(--muted); }
-.row{ display:flex; align-items:center; gap:10px; }
-
-@media (prefers-color-scheme: dark) {
-  :root { color-scheme: dark; }
-}
-@media (prefers-color-scheme: light) {
-  :root { color-scheme: light; }
-}
-html, body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.table th[aria-sort="ascending"]  span::after { content:" ↑"; opacity:.8 }
-.table th[aria-sort="descending"] span::after { content:" ↓"; opacity:.8 }
-
-/* 빈 상태 */
+/* Empty state */
 .empty-state{
   padding: 18px;
   text-align: center;
   color: var(--muted);
 }
 
-/* 테이블 푸터 */
-.table tfoot td{
-  position: sticky;
-  bottom: 0;
-  background: color-mix(in oklab, var(--panel) 92%, black);
-  border-top: var(--border);
-  padding: 0.6rem 0.8rem;
-}
+/* Helpers */
+.muted{ color: var(--muted); }
+.row{ display:flex; align-items:center; gap:10px; }
 
-/* === VirtualTable 정렬 시각 강화 === */
-.table th.sortable{ cursor:pointer; }
-.table th.sortable.active{ color: var(--primary); }
-
-/* 버튼 기본 높이 조정(테마 토글/채널 버튼) */
-.btn{ line-height: 1; }
 
 
