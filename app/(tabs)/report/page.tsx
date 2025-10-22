@@ -1,3 +1,4 @@
+// app/(tabs)/report/page.tsx
 'use client'
 
 import React, { useMemo, useState, useEffect } from 'react'
@@ -44,22 +45,23 @@ export default function ReportPage(){
   const [from, setFrom]   = useState('')
   const [to, setTo]       = useState('')
   const [sel, setSel]     = useState<Set<string>>(new Set())
-  const sp   = useSearchParams()
-  const push = useRouter().replace
-  const path = usePathname()
 
-  // URL → 상태 (초기 1회)
+  const pathname = usePathname()
+  const router = useRouter()
+  const sp = useSearchParams()
+
+  // URL → 상태 (초기 & popstate)
   useEffect(()=>{
-    const q  = sp.get('q')  ?? ''
+    const q  = sp.get('q')    ?? ''
     const f  = sp.get('from') ?? ''
     const t  = sp.get('to')   ?? ''
-    const ch = sp.get('ch')   ?? ''           // ads,organic
+    const ch = sp.get('ch')   ?? ''
     setQuery(q); setFrom(f); setTo(t)
-    setSel(new Set(ch? ch.split(',').filter(Boolean) : []))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[]) // 최초 1회
+    setSel(new Set(ch ? ch.split(',').filter(Boolean) : []))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp.toString()])
 
-  // 상태 → URL (변경 시)
+  // 상태 → URL
   useEffect(()=>{
     const params = new URLSearchParams()
     if(query) params.set('q', query)
@@ -67,8 +69,8 @@ export default function ReportPage(){
     if(to)    params.set('to', to)
     if(sel.size>0) params.set('ch', Array.from(sel).join(','))
     const qs = params.toString()
-    push(`${path}${qs?`?${qs}`:''}`)
-  },[query, from, to, sel, path, push])
+    router.replace(`${pathname}${qs?`?${qs}`:''}`)
+  },[query, from, to, sel, pathname, router])
 
   // 채널 목록
   const channels = useMemo(()=>{
@@ -173,30 +175,27 @@ export default function ReportPage(){
       </div>
 
       {/* 테이블 */}
-      {filtered.length===0 ? (
-        <div className="skeleton"/>
-      ) : (
-        <div id="report-table">
-          <VirtualTable<CsvRow>
-            className="table"
-            rows={filtered}
-            height={480}
-            rowHeight={40}
-            footer={footer}
-            rowKey={(r,i)=> `${String(r.date??'')}-${String(r.channel??'')}-${i}`}
-            columns={[
-              { key: 'date',    header:'날짜',   width:120, sortable:true, render:r=>String(r.date??'') },
-              { key: 'channel', header:'채널',   width:140, sortable:true, render:r=>String(r.channel??'') },
-              { key: 'visits',  header:'방문',   width:110, className:'num', sortable:true, render:r=>fmt(r.visits) },
-              { key: 'clicks',  header:'클릭',   width:110, className:'num', sortable:true, render:r=>fmt(r.clicks) },
-              { key: 'orders',  header:'주문',   width:110, className:'num', sortable:true, render:r=>fmt(r.orders) },
-              { key: 'revenue', header:'매출',   width:130, className:'num', sortable:true, render:r=>fmt(r.revenue) },
-              { key: 'ad_cost', header:'광고비', width:130, className:'num', sortable:true, render:r=>fmt(r.ad_cost) },
-              { key: 'returns', header:'반품',   width:110, className:'num', sortable:true, render:r=>fmt(r.returns) },
-            ]}
-          />
-        </div>
-      )}
+      <div id="report-table">
+        <VirtualTable<CsvRow>
+          className="table"
+          rows={filtered}
+          height={480}
+          rowHeight={40}
+          footer={footer}
+          rowKey={(r,i)=> `${String(r.date??'')}-${String(r.channel??'')}-${i}`}
+          empty={<div>조건에 맞는 데이터가 없습니다.</div>}
+          columns={[
+            { key: 'date',    header:'날짜',   width:120, sortable:true, render:r=>String(r.date??'') },
+            { key: 'channel', header:'채널',   width:140, sortable:true, render:r=>String(r.channel??'') },
+            { key: 'visits',  header:'방문',   width:110, className:'num', sortable:true, render:r=>fmt(r.visits) },
+            { key: 'clicks',  header:'클릭',   width:110, className:'num', sortable:true, render:r=>fmt(r.clicks) },
+            { key: 'orders',  header:'주문',   width:110, className:'num', sortable:true, render:r=>fmt(r.orders) },
+            { key: 'revenue', header:'매출',   width:130, className:'num', sortable:true, render:r=>fmt(r.revenue) },
+            { key: 'ad_cost', header:'광고비', width:130, className:'num', sortable:true, render:r=>fmt(r.ad_cost) },
+            { key: 'returns', header:'반품',   width:110, className:'num', sortable:true, render:r=>fmt(r.returns) },
+          ]}
+        />
+      </div>
 
       <div style={{marginTop:16, opacity:.8}}>
         <p className="text-sm">데이터 원본: <code>kpi_daily.csv</code></p>
@@ -204,5 +203,6 @@ export default function ReportPage(){
     </div>
   )
 }
+
 
 
