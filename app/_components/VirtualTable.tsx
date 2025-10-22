@@ -5,11 +5,11 @@ import React from 'react'
 type Column<T> = {
   key: keyof T | string
   header: React.ReactNode
-  width?: number | string               // 96 | '120px' | '12ch'
-  className?: string                    // 'num' → 우측정렬
+  width?: number | string
+  className?: string
   render?: (row: T) => React.ReactNode
-  sortable?: boolean                    // 정렬 허용 여부
-  sortKey?: (row: T) => number | string // 정렬용 키
+  sortable?: boolean
+  sortKey?: (row: T) => number | string
 }
 
 type Props<T> = {
@@ -19,16 +19,24 @@ type Props<T> = {
   className?: string
   height?: number
   rowHeight?: number
-  /** ✅ 합계/요약 등을 위한 하단 슬롯 */
+  /** 0건일 때 보여줄 커스텀 뷰(없으면 공통 empty-state) */
+  empty?: React.ReactNode
+  /** 테이블 하단 고정 푸터(합계/평균 등) */
   footer?: React.ReactNode
 }
 
 type SortState = { key?: string; dir: 'asc' | 'desc' }
 
 export default function VirtualTable<T>({
-  rows, columns, rowKey, className='table', height = 420, rowHeight = 40, footer,
+  rows,
+  columns,
+  rowKey,
+  className = 'table',
+  height = 420,
+  rowHeight = 40,
+  empty,
+  footer,
 }: Props<T>) {
-
   const [sort, setSort] = React.useState<SortState>({ dir: 'asc' })
 
   const sortedRows = React.useMemo(() => {
@@ -64,31 +72,40 @@ export default function VirtualTable<T>({
     const isActive = sort.key === (c.key as string)
     const ariaSort: React.AriaAttributes['aria-sort'] =
       isActive ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'
-    const style: React.CSSProperties = { userSelect: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }
+    const style: React.CSSProperties = {
+      userSelect: 'none',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+    }
     return {
       role: 'button',
       tabIndex: 0,
       onClick: () => toggleSort(c.key as string),
-      onKeyDown: (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSort(c.key as string) }
+      onKeyDown: (e: React.KeyboardEvent<HTMLTableHeaderCellElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          toggleSort(c.key as string)
+        }
       },
       'aria-sort': ariaSort,
       'aria-label': '정렬',
       style,
+      className: `sortable${isActive ? ' active' : ''}${c.className ? ` ${c.className}` : ''}`,
     }
   }
 
-  const SortIcon = ({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) => (
-    <span aria-hidden style={{ display: 'inline-block', marginLeft: 6, opacity: active ? 1 : .35, transform: dir === 'asc' ? 'rotate(180deg)' : 'none' }}>
-      ▾
-    </span>
-  )
+  if (sortedRows.length === 0) {
+    return (
+      <div className="card" style={{ padding: 0 }}>
+        <div className="empty-state">{empty ?? '데이터 없음'}</div>
+      </div>
+    )
+  }
 
   return (
     <div className="card" style={{ padding: 0 }}>
       <div className="scroll" style={{ maxHeight: height, overflow: 'auto' }}>
         <table className={className} style={{ width: '100%' }}>
-          {/* 헤더/바디 폭 일치 */}
           <colgroup>
             {columns.map((c, i) => (
               <col
@@ -100,18 +117,11 @@ export default function VirtualTable<T>({
 
           <thead>
             <tr>
-              {columns.map((c, i) => {
-                const key = c.key as string
-                const active = sort.key === key
-                return (
-                  <th key={i} className={c.className || undefined} {...thProps(c)}>
-                    <span style={{ display:'inline-flex', alignItems:'center' }}>
-                      {c.header}
-                      {c.sortable && <SortIcon active={active} dir={active ? sort.dir : 'asc'} />}
-                    </span>
-                  </th>
-                )
-              })}
+              {columns.map((c, i) => (
+                <th key={i} {...thProps(c)}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>{c.header}</span>
+                </th>
+              ))}
             </tr>
           </thead>
 
@@ -120,8 +130,9 @@ export default function VirtualTable<T>({
               <tr key={rowKey(r, idx)} style={{ height: rowHeight }}>
                 {columns.map((c, i) => {
                   const content = c.render ? c.render(r) : (r as any)[c.key as string]
+                  const cls = c.className ? c.className : undefined
                   return (
-                    <td key={i} className={c.className || undefined}>
+                    <td key={i} className={cls}>
                       {content}
                     </td>
                   )
@@ -129,21 +140,22 @@ export default function VirtualTable<T>({
               </tr>
             ))}
           </tbody>
+
+          {footer && (
+            <tfoot>
+              <tr>
+                <td colSpan={columns.length}>
+                  <div className="vt-footer">{footer}</div>
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
-
-      {/* ✅ 합계/요약 바 */}
-      {footer && (
-        <div className="table-footer" style={{
-          display:'flex', justifyContent:'flex-end', gap:16,
-          padding:'10px 12px', borderTop:'var(--border)', background:'color-mix(in oklab, var(--panel) 85%, transparent)'
-        }}>
-          {footer}
-        </div>
-      )}
     </div>
   )
 }
+
 
 
 
