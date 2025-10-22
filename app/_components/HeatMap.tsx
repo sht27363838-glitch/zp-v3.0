@@ -1,5 +1,8 @@
+// app/_components/HeatMap.tsx
 'use client'
+
 import React from 'react'
+import { collectCategories, accumulateMatrix } from '@lib/heat'
 
 type Row = {
   date?: string
@@ -34,8 +37,9 @@ type Props = {
 
 /**
  * 채널×상품 히트맵
- * - O(N) 1-pass 집계 (key = `${y}|${x}`)
+ * - O(N) 1-pass 집계 (accumulateMatrix)
  * - 셀 색상은 CR 기반 alpha
+ * - 헤더/바디 정렬 안정(고정 테이블 레이아웃 + 일관된 셀)
  */
 export default function HeatMap({
   rows,
@@ -44,36 +48,12 @@ export default function HeatMap({
   onCellClick,
   className = 'table',
 }: Props) {
-  // 축 라벨 수집
-  const xcats = React.useMemo(() => {
-    const s = new Set<string>()
-    for (const r of rows) s.add(String((r as any)[xKey] ?? 'unknown'))
-    return Array.from(s).sort()
-  }, [rows, xKey])
-
-  const ycats = React.useMemo(() => {
-    const s = new Set<string>()
-    for (const r of rows) s.add(String((r as any)[yKey] ?? 'generic'))
-    return Array.from(s).sort()
-  }, [rows, yKey])
+  // 축 라벨 수집 (정렬 포함)
+  const xcats = React.useMemo(() => collectCategories(rows as any[], xKey, 'unknown'), [rows, xKey])
+  const ycats = React.useMemo(() => collectCategories(rows as any[], yKey, 'generic'), [rows, yKey])
 
   // 1-pass 집계
-  const agg = React.useMemo(() => {
-    type Cell = { visits: number; clicks: number; orders: number; ad_cost: number }
-    const m = new Map<string, Cell>()
-    for (const r of rows) {
-      const x = String((r as any)[xKey] ?? 'unknown')
-      const y = String((r as any)[yKey] ?? 'generic')
-      const k = `${y}|${x}`
-      const o = m.get(k) ?? { visits: 0, clicks: 0, orders: 0, ad_cost: 0 }
-      o.visits += Number(r.visits ?? 0)
-      o.clicks += Number(r.clicks ?? 0)
-      o.orders += Number(r.orders ?? 0)
-      o.ad_cost += Number(r.ad_cost ?? 0)
-      m.set(k, o)
-    }
-    return m
-  }, [rows, xKey, yKey])
+  const agg = React.useMemo(() => accumulateMatrix(rows as any[], xKey, yKey), [rows, xKey, yKey])
 
   function cell(x: string, y: string) {
     const k = `${y}|${x}`
@@ -85,7 +65,7 @@ export default function HeatMap({
   return (
     <div className="card" style={{ padding: 0 }}>
       <div className="scroll">
-        <table className={className} style={{ width: '100%' }}>
+        <table className={className} style={{ width: '100%', tableLayout: 'fixed' }}>
           <thead>
             <tr>
               <th>{String(yKey)} \ {String(xKey)}</th>
@@ -104,6 +84,7 @@ export default function HeatMap({
                   return (
                     <td key={x}>
                       <button
+                        type="button"
                         className="cell"
                         onClick={() => onCellClick?.({ x, y, ...v })}
                         aria-label={`CR ${(v.cr * 100).toFixed(1)}% / 주문 ${fmt(v.orders)} / 클릭 ${fmt(v.clicks)}`}
@@ -114,6 +95,7 @@ export default function HeatMap({
                           borderRadius: 8,
                           textAlign: 'right',
                           fontVariantNumeric: 'tabular-nums',
+                          border: '1px solid rgba(255,255,255,.06)',
                         }}
                       >
                         {(v.cr * 100).toFixed(1)}%
