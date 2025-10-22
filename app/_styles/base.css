@@ -201,5 +201,30 @@ html, body {
 .muted{ color: var(--muted); }
 .row{ display:flex; align-items:center; gap:10px; }
 
+/* === VirtualTable 정렬 시각 강화 === */
+.table th[aria-sort="ascending"]  span::after { content:" ↑"; opacity:.8 }
+.table th[aria-sort="descending"] span::after { content:" ↓"; opacity:.8 }
+.table th.sortable{ cursor:pointer; }
+.table th.sortable.active{ color: var(--primary); }
+
+/* 빈 상태 */
+.empty-state{
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* VirtualTable 하단 합계 고정뷰 */
+.vt-footer{
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  border-top: var(--border);
+  padding: .6rem .8rem;
+  backdrop-filter: blur(4px);
+}
+
+
 
 
